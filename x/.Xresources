@@ -1,0 +1,35 @@
+! colors
+#include ".Xresources.d/nord" 
+! urxvt
+URxvt*termName: rxvt-unicode-256color
+URxvt*loginShell: true
+URxvt*scrollColor: #777777
+URxvt*scrollstyle: plain
+URxvt*scrollBar: false
+URxvt*scrollBar_right: false
+URxvt*scrollBar_floating: false
+URxvt*urgentOnBell: false
+URxvt*visualBell: false
+URxvt*mouseWheelScrollPage: true 
+URxvt*background: Black
+URxvt*foreground: White
+URxvt*colorUL: yellow
+URxvt*underlineColor: yellow
+URxvt*font: xft:DejaVu Sans Mono:pixelsize:13
+URxvt*boldFont: xft:DejaVu Sans Mono:pixelsize:13
+URxvt*italicFont: xft:Bitstream Vera Sans Mono:italic:autohint=true:pixelsize=13
+URxvt*boldItalicFont: xft:Bitstream Vera Sans Mono:bold:italic:autohint=true:pixelsize=16
+URxvt*saveLines: 0
+URxvt*buffered: true
+URxvt*hold: false
+URxvt*print-pipe: cat > $HOME/$(echo urxvt.dump.$(date +'%Y%M%d%H%m%S'))
+URxvt*perl-ext-common:
+URxvt*perl-ext:
+URxvt.scrollBar: off
+URxvt*cursorBlink: true
+
+! dmenu
+dmenu.background: background
+dmenu.foreground: foreground
+dmenu.selforeground: background
+dmenu.selbackground: foreground

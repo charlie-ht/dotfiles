@@ -1,0 +1,4 @@
+
+A6000_UUID=3435-6166
+MOUNT=$(findmnt  -n -S UUID=$A6000_UUID -o TARGET)
+

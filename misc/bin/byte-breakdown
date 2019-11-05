@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+
+import sys
+import re
+
+SI_prefixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+SI = zip(SI_prefixes, [10**(i*3) for i in range(len(SI_prefixes))])
+IEC_prefixes = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
+IEC = zip(IEC_prefixes, [2**(i*10) for i in range(len(SI_prefixes))])
+
+def unit_size(unit):
+   unit = unit.lower()
+   for v in SI:
+      if v[0].lower() == unit:
+         return v[1]
+   for v in IEC:
+      if v[0].lower() == unit:
+         return v[1]
+   return 0
+
+
+def show_byte_quantity(quantity, unit):
+   size = unit_size(unit)
+   print(unit, size)
+
+   if size == 0:
+      print("{} not a known unit".format(unit))
+      return
+
+
+def main():
+   for byte_quantity in sys.argv[1:]:
+      match = re.findall(r"^(\d+)(\w+)", byte_quantity)
+      if not match:
+         print("{} is not a valid input".format(byte_quantity))
+      else:
+         show_byte_quantity(*match[0])
+
+if __name__ == '__main__':
+   main()
+

@@ -1,0 +1,36 @@
+[alias]
+	co = checkout
+	br = branch
+	brs = branch -r --sort=-committerdate
+	ci = commit
+	st = status -s
+	di = diff
+        stepback = reset --hard HEAD~1
+	unstage = reset HEAD --
+        llog = log --date=local
+	whois = "!sh -c 'git log -i -1 --pretty=\"format:%an <%ae>\n\" --author=\"$1\"' -"
+	whatis = show -s --pretty='tformat:%h (%s, %ad)' --date=short
+        slog = log --stat
+	lg = log --graph --pretty=format:'%Cred%h%Creset -%Creset%<(70,mtrunc) %s %Cgreen%cd %C(bold blue)%<(15,trunc)%aN %Cblue<%aE>%Creset' --date=short
+        untrack = rm --cache --
+	up = "!git remote update -p; git merge --ff-only @{u}"
+        logupdated = log --oneline --name-status ORIG_HEAD..
+	branchnews = branch --sort=-committerdate -r
+	cl = git clean -fd
+[user]
+	name = Charlie Turner
+	email = cturner@igalia.com
+[core]
+	editor = vim
+[diff]
+	tool = meld
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[sendemail]
+	smtpEncryption = tls
+	smtpServer = mail.igalia.com
+	smtpUser = cturner
+	smtpServerPort = 587
