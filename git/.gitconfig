@@ -5,6 +5,7 @@
 	ci = commit
 	st = status -s
 	di = diff
+	ca = commit -a
         stepback = reset --hard HEAD~1
 	unstage = reset HEAD --
         llog = log --date=local
