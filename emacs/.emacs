@@ -2,7 +2,8 @@
 (let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
                     (not (gnutls-available-p))))
        (proto (if no-ssl "http" "https")))
-  (when no-ssl (warn "\
+  (when no-ssl
+    (warn "\
 Your version of Emacs does not support SSL connections,
 which is unsafe because it allows man-in-the-middle attacks.
 There are two things you can do about this warning:
@@ -16,34 +17,117 @@ There are two things you can do about this warning:
     (add-to-list 'package-archives (cons "gnu" (concat proto "://elpa.gnu.org/packages/")))))
 (package-initialize)
 
-(add-to-list 'package-archives
-             '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(font-use-system-font t)
- '(org-capture-templates nil)
- '(package-selected-packages
-   (quote
-    (flycheck-rust cargo company-lsp ledger-mode magit company racer borland-blue-theme zones helm melpa-upstream-visit)))
- '(vc-follow-symlinks t))
+(eval-when-compile
+  (require 'use-package))
 
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+(server-start)
 
-(setq backup-directory-alist `(("." . "~/.saves")))
-(setq backup-by-copying t)
-(setq delete-old-versions t
-  kept-new-versions 6
-  kept-old-versions 2
-  version-control t)
+(scroll-bar-mode -1)
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+(show-paren-mode 1)
+
+(add-to-list 'default-frame-alist '(width  . 136))
+(add-to-list 'default-frame-alist '(height . 44))
+(add-to-list 'default-frame-alist '(font . "Hack-13"))
+
+(load-theme 'tsdh-light t)
+
+(global-set-key (kbd "C-;") 'completion-at-point)
+
+(setq-default backup-directory-alist `(("." . "~/.saves"))
+      backup-by-copying t
+      delete-old-versions t
+      kept-new-versions 6
+      kept-old-versions 2
+      version-control t
+      vc-follow-symlinks t
+      indent-tabs-mode nil
+      debug-on-error t)
+
+(defun cht-text-mode-hook ()
+  (local-set-key (kbd "C-;") 'ispell-complete-word)
+  (flyspell-mode))
+(add-hook 'text-mode-hook 'cht-text-mode-hook)
+
+(use-package rainbow-delimiters
+  :ensure t
+  :config
+  (add-hook 'prog-mode-hook 'rainbow-delimiters-mode))
+
+(use-package ansi-color
+  :ensure t)
+(defun cht:display-ansi-colors ()
+  "Convert ANSI terminal codes into colors across the whole buffer."
+  (interactive)
+  (ansi-color-apply-on-region (point-min) (point-max)))
+
+(use-package helm
+  :diminish helm-mode
+  :ensure t
+  :init
+  (require 'helm-config)
+  (helm-mode 1)
+  :bind (("C-c h" . helm-mini)
+	 ("C-h a" . helm-apropos)
+	 ("C-x C-b" . helm-buffers-list)
+	 ("C-x b" . helm-buffers-list)
+	 ("M-y" . helm-show-kill-ring)
+	 ("C-x c o" . helm-occur)
+	 ("M-x" . helm-M-x)
+	 ("C-x C-f" . helm-find-files)))
+
+(use-package magit
+  :ensure t
+  :bind (("C-x g" . magit-status)))
+
+(use-package cc-mode
+  :defer t
+  :after compile
+  :config
+  (defconst my-cc-style
+  '("k&r"
+    (c-offsets-alist . ((innamespace . [0])))))
+  (setq c-default-style '((java-mode . "java")
+                          (awk-mode . "awk")
+                          (c++-mode . "my-cc-mode")
+                          (c-mode . "my-cc-mode")
+                          (other . "k&r")))
+  (defvar compile-guess-command-table
+    '((c-mode . "cc -Wall -Wextra -g %s -o %s -lm")
+      (c++-mode . "c++ -Wall -Wextra -std=c++17 -g %s -o %s -lm")))
+  (defun compile-guess-command ()
+    (let ((command-for-mode (cdr (assq major-mode compile-guess-command-table))))
+      (when (and command-for-mode (stringp buffer-file-name))
+        (let* ((file-name (file-name-nondirectory buffer-file-name))
+               (file-name-sans-prefix (when (and (string-match "\\.[^.]*\\'" file-name)
+                                                 (> (match-beginning 0) 0))
+                                        (substring file-name 0 (match-beginning 0)))))
+          (when file-name-sans-suffix
+            (progn
+              (make-local-variable 'compile-command)
+              (setq compile-commond
+                    (if (stringp command-for-mode)
+                        (format command-for-mode
+                                file-name filename-sans-suffix)
+                      (funcall command-for-mode
+                               file-name file-name-sans-suffix)))
+              compile-command)))))))
+          
+(use-package helm-descbinds
+  :defer t
+  :ensure t
+  :bind (("C-h b" . helm-descbinds)
+	 ("C-h w" . helm-descbinds)))
+
+(use-package s
+  :ensure t
+  :defer t)
+(require 's)
 
 (global-set-key (kbd "C-<tab>") 'hippie-expand)
 (setq hippie-expand-try-functions-list
@@ -52,38 +136,53 @@ There are two things you can do about this warning:
 	try-complete-lisp-symbol-partially try-complete-lisp-symbol))
 (define-key minibuffer-local-map (kbd "C-<tab>") 'hippie-expand)
 
-(setq kept-old-versions 0
-      kept-new-versions 5
-      dired-kept-versions 5
-      delete-old-versions t)
+(use-package company               
+  :ensure t
+  :defer t
+  :init (global-company-mode)
+  :config
+  (progn
+    ;; Use Company for completion
+    (bind-key [remap completion-at-point] #'company-complete company-mode-map)
 
-;; default to case insensitive
-(eval-after-load "grep"
-  '(grep-apply-setting 'grep-command "grep --color -niH -e "))
+    (setq company-tooltip-align-annotations t
+          ;; Easy navigation to candidates with M-<n>
+          company-show-numbers t)
+    (setq company-dabbrev-downcase nil))
+  :diminish company-mode)
 
-;; enter the debugger whenever something goes wrong
-(setq-default debug-on-error t)
+(use-package rust-mode
+  :ensure t
+  :defer t
+  :init
+  (require 'rust-mode)
+  (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-mode))
 
-;; helm
-(require 'helm-config)
-(global-set-key (kbd "M-x") #'helm-M-x)
-(global-set-key (kbd "C-x r b") #'helm-filtered-bookmarks)
-(global-set-key (kbd "C-x C-f") #'helm-find-files)
-(helm-mode 1)
-
-(set-face-attribute 'default nil :font "Mono-12" )
-(set-frame-font "Mono-12" nil t)
-
-(desktop-save-mode 1)
-;; this is used to make sure we don't try and restore the desktop in
-;; daemon mode, doing so doesn't make sense since the daemon cannot
-;; use GUI features to restore such things.
-(add-hook 'after-make-frame-functions 'desktop-read)
-;; desktop-path is a handy variable
-
-(server-start)
-
-(require 's)  ; string library
+  :config
+  (use-package racer
+    :ensure t
+    :init
+    (setq racer-rust-src-path
+          (concat (getenv "HOME")
+                  "/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/src"))
+    :config
+    (add-hook 'racer-mode-hook #'eldoc-mode)
+    (add-hook 'racer-mode-hook #'company-mode)
+  (use-package cargo
+    :ensure t
+    :config
+    (add-hook 'rust-mode-hook 'cargo-minor-mode))
+  (use-package company-racer :ensure t)
+  (use-package flycheck-rust
+    :ensure t
+    :config
+    (add-hook #'flycheck-mode-hook #'flycheck-rust-setup))
+  (defun my-rust-mode-hook ()
+    (set (make-local-variable 'compile-command) "cargo run"))
+  (add-hook 'rust-mode-hook 'my-rust-mode-hook)
+  (add-hook 'rust-mode-hook #'racer-mode)
+  (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
+  (setq rust-format-on-save t)))
 
 (defun webkit-resolve-traceback-line (line)
  "Resolve a non-symbolic trace to a symbolic function name using
@@ -132,29 +231,26 @@ function names for a number of frames."
    nil
    nil))
 
-(load-theme 'borland-blue t)
-
-(require 'ansi-color)
-(defun display-ansi-colors ()
-  (interactive)
-  (ansi-color-apply-on-region (point-min) (point-max)))
-
-(setq-default indent-tabs-mode nil)
-;(define-key 'c-mode-map (kbd "C-c C-k") #'compile)
-(add-hook 'c-mode-common-hook 'flyspell-prog-mode)
-(setq-default c-basic-offset 4)
-
-(require 'rust-mode)
-(define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
-(add-hook 'rust-mode-hook #'racer-mode)
-(add-hook 'racer-mode-hook #'eldoc-mode)
-(add-hook 'racer-mode-hook #'company-mode)
-(add-hook 'rust-mode-hook 'cargo-minor-mode)
-
-(setq racer-rust-src-path "/home/cturner/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/src")
-(setq company-tooltip-align-annotations t)
-
-(add-hook 'rust-mode-hook
-          (lambda ()
-            (local-set-key (kbd "C-c <tab>") #'rust-format-buffer)))
-(add-hook 'flycheck-mode-hook #'flycheck-rust-setup)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(rainbow-delimiters-base-error-face ((t (:inherit rainbow-delimiters-base-face :foreground "firebrick1"))))
+ '(rainbow-delimiters-depth-1-face ((t (:inherit rainbow-delimiters-base-face :foreground "pale green"))))
+ '(rainbow-delimiters-depth-2-face ((t (:inherit rainbow-delimiters-base-face :foreground "sandy brown"))))
+ '(rainbow-delimiters-depth-3-face ((t (:inherit rainbow-delimiters-base-face :foreground "PaleGreen2"))))
+ '(rainbow-delimiters-depth-4-face ((t (:inherit rainbow-delimiters-base-face :foreground "thistle1"))))
+ '(rainbow-delimiters-depth-5-face ((t (:inherit rainbow-delimiters-base-face :foreground "papaya whip"))))
+ '(rainbow-delimiters-depth-6-face ((t (:inherit rainbow-delimiters-base-face :foreground "green1"))))
+ '(rainbow-delimiters-depth-7-face ((t (:inherit rainbow-delimiters-base-face :foreground "white"))))
+ '(rainbow-delimiters-depth-8-face ((t (:inherit rainbow-delimiters-base-face :foreground "coral1"))))
+ '(rainbow-delimiters-depth-9-face ((t (:inherit rainbow-delimiters-base-face :foreground "HotPink1")))))
