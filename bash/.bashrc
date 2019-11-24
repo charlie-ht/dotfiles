@@ -48,6 +48,7 @@ shopt -s checkwinsize
 # make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
+# See gpg-agent(1)
 GPG_TTY=$(tty)
 export GPG_TTY
 
@@ -66,7 +67,7 @@ if [ -x /usr/bin/dircolors ]; then
     alias la='ls --color=auto -A'
     alias l='ls --color=auto -CF'
 fi
-alias e='/home/cturner/stage/bin/emacsclient -n'
+alias e='emacsclient -n'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
@@ -80,6 +81,8 @@ alias c_dir_size='du -sh'
 alias c_myip='curl http://ipecho.net/plain; echo'
 alias c_myps='ps -U $(whoami) -u $(whoami) u'
 alias c_sprunge="curl -F 'sprunge=<-' http://sprunge.us"
+alias pypath="echo $PYTHONPATH | tr ':' '\n'"
+
 function c_file_times()
 {
     echo "birth access mod status filename"

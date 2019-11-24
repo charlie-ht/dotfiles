@@ -35,7 +35,7 @@ There are two things you can do about this warning:
 (add-to-list 'default-frame-alist '(height . 44))
 (add-to-list 'default-frame-alist '(font . "Hack-13"))
 
-(load-theme 'tsdh-light t)
+(load-theme 'tsdh-dark t)
 
 (global-set-key (kbd "C-;") 'completion-at-point)
 
@@ -85,17 +85,25 @@ There are two things you can do about this warning:
   :ensure t
   :bind (("C-x g" . magit-status)))
 
+(global-set-key (kbd "C-c C-k") 'compile)
+
 (use-package cc-mode
   :defer t
   :after compile
   :config
+  (defun cht-c-mode-hook ()
+    (hs-minor-mode)
+    (local-set-key (kbd "<f10>") 'hs-hide-block)
+    (local-set-key (kbd "<f11>") 'hs-show-block))
+  (add-hook 'cc-mode-hook 'cht-c-mode-hook)
+
   (defconst my-cc-style
   '("k&r"
     (c-offsets-alist . ((innamespace . [0])))))
   (setq c-default-style '((java-mode . "java")
                           (awk-mode . "awk")
-                          (c++-mode . "my-cc-mode")
-                          (c-mode . "my-cc-mode")
+                          (c++-mode . "my-cc-style")
+                          (c-mode . "my-cc-style")
                           (other . "k&r")))
   (defvar compile-guess-command-table
     '((c-mode . "cc -Wall -Wextra -g %s -o %s -lm")
@@ -161,10 +169,6 @@ There are two things you can do about this warning:
   :config
   (use-package racer
     :ensure t
-    :init
-    (setq racer-rust-src-path
-          (concat (getenv "HOME")
-                  "/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/src"))
     :config
     (add-hook 'racer-mode-hook #'eldoc-mode)
     (add-hook 'racer-mode-hook #'company-mode)

@@ -1,16 +1,20 @@
 #!/bin/bash
 
+# To build from widevine src dir (a git worktree)
+# webkit-build.sh --src-dir=$HOME/webkit/webkit-widevine --build-type=release --incr
+# To run this widevine build, I make the assumption that the worktree is built in a unique branch name, so the cmd is
+# webkit-launch-minibrowser.sh --port=gtk --build-type=release --branch=widevine-r246539 <url>
+
 D=$(dirname $(readlink -f $0))
 source $D/common.sh
 source $D/webkit-common.sh
 
 extra_cmake_args='-DLOG_DISABLED=0 -DENABLE_MEDIA_SOURCE=ON -DENABLE_ENCRYPTED_MEDIA=ON'
-src_dir=$HOME/webkit/webkit-git
 
 while test -n "$1"; do
     case "$1" in
-        --webkit-src-dir=*)
-            src_dir="${1#--webkit-src-dir=}"
+        --src-dir=*)
+            src_dir="${1#--src-dir=}"
             ;;
         --force-rebuild)
             force_rebuild="yes"
@@ -82,10 +86,8 @@ if test -n "$build_deps"; then
     jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES build
 fi
 
-if test -z "$branch"; then
-    branch=$(git -C $src_dir rev-parse --abbrev-ref HEAD | sed -e 's/[^A-Za-z0-9._-]/_/g')
-    branch=$(echo $branch | sed -e 's/[^A-Za-z0-9._-]/_/g')
-fi
+check_branch
+normalize_branch
 
 echo_heading "Building $port:$branch in configuration $build_type"
 

@@ -4,7 +4,7 @@ D=$(dirname $(readlink -f $0))
 source $D/common.sh
 source $D/webkit-common.sh
 
-src_dir=$HOME/webkit/webkit-git
+src_dir=$HOME/webkit/WebKit
 gst_debug='*:2'
 
 while test -n "$1"; do
@@ -64,10 +64,9 @@ if test -z "$src_dir"; then
     exit 1
 fi
 if test -z "$branch"; then
-    echo_error "no branch given, aborting"
-    exit 1
+    branch=$(git -C $src_dir rev-parse --abbrev-ref HEAD | sed -e 's/[^A-Za-z0-9._-]/_/g')
+    branch=$(echo $branch | sed -e 's/[^A-Za-z0-9._-]/_/g')
 fi
-
 
 build_dir=$HOME/webkit/build-$port-$branch-$build_type
 if ! test -d "$build_dir"; then
@@ -93,9 +92,10 @@ fi
 
 if test -n "$gst_debug"; then
     echo_heading "Dumping GStreamer dot files to /tmp"
-    dump_dots_args='--additional-env-var=GST_DEBUG_DUMP_DOT_DIR=/tmp'
+    dump_dots_args="--additional-env-var=GST_DEBUG_DUMP_DOT_DIR=$HOME/gstreamer-dumps/"
 fi
 
+export WEBKIT_CORE_DUMPS_DIRECTORY=$HOME/cores
 time jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run \
 	$src_dir/Tools/Scripts/run-webkit-tests \
 	--additional-env-var="GST_PLUGIN_SYSTEM_PATH=$GST_PLUGIN_SYSTEM_PATH" \

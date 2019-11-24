@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# Write its invocation out to a temp file
+
+echo $0: $@ > /tmp/tmpwriter_$(date +%H-%M-%S)
+

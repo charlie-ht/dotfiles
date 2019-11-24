@@ -1,11 +1,12 @@
 #!/bin/bash
 
 D=$(dirname $(readlink -f $0))
+
 source $D/common.sh
 source $D/webkit-common.sh
 
-GST_DEBUG='*:2,webkit*:DEBUG'
-WEBKIT_DEBUG='EME,Events,Media,Fullscreen'
+GST_DEBUG='*:2'
+#WEBKIT_DEBUG='EME,Media'
 
 while test -n "$1"; do
     case "$1" in
@@ -53,10 +54,9 @@ if test -z "$port"; then
     echo_warning "no port given, default to gtk"
     port=gtk
 fi
-if test -z "$branch"; then
-    echo_warning "no branch given, default to master"
-    branch=master
-fi
+
+check_branch
+normalize_branch
 
 echo_heading "Running minibrowser for $port:$branch in configuration $build_type"
 build_dir=$HOME/webkit/build-$port-$branch-$build_type
@@ -64,7 +64,6 @@ if ! test -d "$build_dir"; then
     echo_error "no build product for $port-$branch-$build_type"
     exit 1
 fi
-
 cmd_prefix="jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run"
 if test -n "$run_strace"; then
    cmd_prefix="strace -f -e trace=stat $cmd_prefix"
@@ -74,11 +73,12 @@ fi
 echo_heading "MiniBrowser run for $port:$branch in configuration $build_type" >>run.log
 
 rm -rf ~/.cache/MiniBrowser
+rm /tmp/*.dot
 env Malloc=1 \
-    G_DEBUG=fatal-criticals,fatal-warnings \
+    G_DEBUG=fatal-criticals,fatal-warnings,gc-friendly \
     G_SLICE=always-malloc \
-    G_DEBUG=gc-friendly \
     GST_DEBUG=$GST_DEBUG \
+    GST_DEBUG_DUMP_DOT_DIR=/tmp/ \
     WEBKIT_DEBUG=$WEBKIT_DEBUG \
     $cmd_prefix $build_dir/bin/MiniBrowser \
     --enable-write-console-messages-to-stdout=1 \

@@ -3,10 +3,12 @@
 D=$(dirname $(readlink -f $0))
 source $D/common.sh
 
+rsync_dry_run='-n'
+
 while test -n "$1"; do
     case "$1" in
-        --commit)
-            do_commit=1
+        --write)
+            rsync_dry_run=''
             ;;
         *)
             passthru="$passthru $1"
@@ -16,47 +18,54 @@ while test -n "$1"; do
 done
 
 
-TOSHIBA_UUID=0f286a71-0ca3-429e-b973-987ff555004e
-PASSPORT_UUID=c788d9de-d012-45d5-9663-2cfe17de9219
+MOUNT=/media/cht/Backup
 
-MOUNT=$(findmnt -n -S UUID=$PASSPORT_UUID -o TARGET)
-if test -n $MOUNT ; then
-    MOUNT=$(findmnt -n -S UUID=$TOSHIBI_UUID -o TARGET)
-    if test -n $MOUNT; then
-	echo_error "Could not find backup mount point"
-        exit 1
-    else
-        echo_heading "Found Toshiba drive at $MOUNT"
-    fi
-else
-    echo_heading "Found Passport drive at $MOUNT"
+if ! test -d $MOUNT; then
+    echo_error "$MOUNT does not exist"
+    exit 1
 fi
 
 echo_heading "Backing up to mount point $MOUNT"
 
-if test -n "$do_commit" ; then
-    rsync_dry_run='-n'
-fi
-
-cat <<EOF | rsync -va $rsync_dry_run --delete --delete-excluded --filter='. -' $HOME/ "$MOUNT/rsync"
+cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human-readable --filter='. -' $HOME/ "$MOUNT/rsync" | tee $HOME/logs/backup-$(date +%Y-%M-%d).log
 # Per-directory overrides.
 # : .rsync-excludes
 
 # Selectively include dotfiles
++ .bash_history
 + .bash_logout
 + .bash_profile
 + .bashrc
-+ .gdbinit
-+ .gnupg/
-+ .ssh/
-+ .maildirs/
-+ .getmail/
-+ .msmtprc
-+ .config/user/
-+ .password-store/
++ .config
++ .emacs
++ .gitconfig
++ .gnupg
++ .gtk-bookmarks
++ .local
++ .mozilla
++ .npm
++ .password-store
++ .pki
++ .profile
++ .saves
++ .ssh
++ .steam
++ .steampath
++ .steampid
++ .subversion
++ .tmux.conf
++ .var
++ .vim
++ .viminfo
++ .vimrc
++ .wget-hsts
++ .xchm
++ .Xresources
++ .Xresources.d
 # Make sure this stays as the last thing after the explicit includes.
 - /.*
 
+# Selectively exclude files
 - /Downloads
 - /scratch
 - *.pyc
@@ -64,11 +73,10 @@ cat <<EOF | rsync -va $rsync_dry_run --delete --delete-excluded --filter='. -' $
 - *.swp
 - *#*
 - *ccache*
-- WebKitBuild/
 - Qt/
 - /webkit/build*/
 - /webkit/deps*/
-
+- /igalia/metro/poky/
 - /buildroot/**/dl/
 - /buildroot/**/output*/
 - /buildroot/**/ccache/
