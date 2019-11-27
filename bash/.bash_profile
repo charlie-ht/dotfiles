@@ -19,23 +19,15 @@ pathmunge () {
 export EDITOR='emacsclient'
 export PAGER=less
 
-if [ -d $HOME/bin ]; then
-    pathmunge $HOME/bin
-fi
+path_append_if_missing()
+{
+    local pathname="$1"
+    if [ -d $pathname ]; then
+        pathmunge $pathname
+    fi
+}
 
-if [ -d $HOME/.local/bin ]; then
-	pathmunge $HOME/.local/bin
-fi
-
-if [ -d $HOME/.cargo/bin ]; then
-    pathmunge $HOME/.cargo/bin
-fi
-
-# If icecc is installed, make sure it's the root of the path
-if [ -d /usr/lib/icecc/bin ]; then
-	pathmunge /usr/lib/icecc/bin
-     # ccache must precede icecc (https://bugzilla.redhat.com/show_bug.cgi?id=377761)
-     if [ -d /usr/lib/ccache ]; then
-	     pathmunge /usr/lib/ccache
-     fi
-fi
+path_append_if_missing $HOME/bin
+path_append_if_missing $HOME/.local/bin
+path_append_if_missing $HOME/.cargo/bin
+path_append_if_missing $HOME/Bento4-SDK-1-5-1-629.x86_64-unknown-linux/bin

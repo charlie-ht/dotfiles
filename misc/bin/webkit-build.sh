@@ -127,7 +127,7 @@ if test -z "$incremental_build"; then
 	  -DDEVELOPER_MODE=ON \
 	  -DENABLE_MINIBROWSER=ON \
 	  -DENABLE_BUBBLEWRAP_SANDBOX=OFF \
-	  $CMAKEARGS
+	  $extra_cmake_args
     echo_heading "Running Ninja"
     time jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run ninja -j$NUM_CORES
 else

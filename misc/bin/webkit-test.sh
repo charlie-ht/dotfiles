@@ -7,6 +7,20 @@ source $D/webkit-common.sh
 src_dir=$HOME/webkit/WebKit
 gst_debug='*:2'
 
+usage() {
+    echo_heading "Usage:"
+    echo
+    echo "  WebKit testing launch script"
+    echo "      --build-type=debug|release  [REQUIRED]"
+    echo "      --port=gtk|wpe [DEFAULT=gtk]"
+    echo "      --branch=<branch-name> - will select a different branch build [DEFAULT=current branch in srcdir]"
+    echo "      --webkit-src-dir=/some/path - path to WebKit source directory, useful for worktrees [DEFAULT $src_dir]"
+    echo "      --gst-debug=*:2             - set the GST_DEBUG variable"
+    echo "      --debug - will pause the WebProcess on startup to allow GDB attachment"
+    echo "      ... - remaining args are paths under LayoutTests. My default is http/tests/media fast/media fast/mediastream media imported/w3c/web-platform-tests/media imported/web-platform-tests/encrypted-media imported/w3c/web-platform-tests/media-source webaudio"
+    echo
+}
+
 while test -n "$1"; do
     case "$1" in
         --gst-debug=*)
@@ -53,6 +67,7 @@ done
 
 if test -z "$build_type"; then
     echo_error "no build type given, aborting"
+    usage
     exit 1
 fi
 if test -z "$port"; then
@@ -61,6 +76,7 @@ if test -z "$port"; then
 fi
 if test -z "$src_dir"; then
     echo_error "no source directory given, aborting"
+    usage
     exit 1
 fi
 if test -z "$branch"; then
@@ -71,6 +87,7 @@ fi
 build_dir=$HOME/webkit/build-$port-$branch-$build_type
 if ! test -d "$build_dir"; then
     echo_error "no build product for $port-$branch-$build_type"
+    usage
     exit 1
 fi
 if ! test -d "$build_dir/webkitgtk-test-fonts"; then
@@ -78,6 +95,7 @@ if ! test -d "$build_dir/webkitgtk-test-fonts"; then
     git clone "https://github.com/WebKitGTK/webkitgtk-test-fonts.git" "$build_dir/webkitgtk-test-fonts"
     if test ! $? -eq 0; then
         echo_error "failed to clone webkitgtk test fonts, aborting"
+        usage
         exit 1
     fi
 fi

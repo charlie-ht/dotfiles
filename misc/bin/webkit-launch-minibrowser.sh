@@ -10,6 +10,9 @@ GST_DEBUG='*:2'
 
 while test -n "$1"; do
     case "$1" in
+        --gst-debug=*)
+            GST_DEBUG="${1#--gst-debug=}"
+            ;;
         --build-type=*)
             build_type="${1#--build-type=}"
             if ! test "$build_type" = "debug" -o "$build_type" = "release"; then
