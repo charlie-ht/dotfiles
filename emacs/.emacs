@@ -49,6 +49,16 @@ There are two things you can do about this warning:
       indent-tabs-mode nil
       debug-on-error t)
 
+(desktop-save-mode 1)
+(setq-default desktop-restore-eager 10 ; max number of desktop to restore at startup
+              desktop-load-locked-desktop t ; load desktops without asking, even in error cases, woohoo
+              desktop-save t ; always save
+              desktop-dirname "/home/cht/.emacs-desktop/"
+              desktop-base-file-name "desktop-"
+)
+(add-to-list 'desktop-path "/home/cht/.emacs-desktop/")
+;desktop-path
+
 (defun cht-text-mode-hook ()
   (local-set-key (kbd "C-;") 'ispell-complete-word)
   (flyspell-mode))
@@ -79,11 +89,13 @@ There are two things you can do about this warning:
 	 ("M-y" . helm-show-kill-ring)
 	 ("C-x c o" . helm-occur)
 	 ("M-x" . helm-M-x)
+         ("<f9>" . test-helm)
 	 ("C-x C-f" . helm-find-files)))
 
 (use-package magit
   :ensure t
   :bind (("C-x g" . magit-status)))
+
 
 (global-set-key (kbd "C-c C-k") 'compile)
 
@@ -187,6 +199,37 @@ There are two things you can do about this warning:
   (add-hook 'rust-mode-hook #'racer-mode)
   (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
   (setq rust-format-on-save t)))
+
+
+(defun elisp-insert-evaluation ()
+  (interactive)
+  (let ((current-prefix-arg t))
+    (eval-last-sexp current-prefix-arg)))
+(define-key emacs-lisp-mode-map (kbd "<f4>") #'elisp-insert-evaluation)
+
+(setq cht-paths-to-top-level-search-directories-assoc
+      (list
+       (cons ".*/WebKit/Tools/.*" "/home/cht/webkit/WebKit/Tools/")
+       (cons ".*/WebKit/Source/.*" "/home/cht/webkit/WebKit/Source/")))
+
+(defun cht-project-find-top-level-dir-for-path (current-dir database)
+  (cond ((null database) nil)
+        (t
+         (let ((path-regex (caar database))
+               (top-level-dir (cdar database)))
+           (if (string-match path-regex current-dir)
+               top-level-dir
+             (cht-project-find-top-level-dir-for-path current-dir (cdr database)))))))
+(defun cht-project-search ()
+  (interactive)
+  (let ((top-level-search-path (cht-project-find-top-level-dir-for-path buffer-file-name cht-paths-to-top-level-search-directories-assoc)))
+    (if top-level-search-path
+        (helm-grep-git-1 top-level-search-path)
+      (error "No search path matches the cwd"))))
+(global-set-key (kbd "<f9>") 'cht-project-search)
+
+
+
 
 (defun webkit-resolve-traceback-line (line)
  "Resolve a non-symbolic trace to a symbolic function name using

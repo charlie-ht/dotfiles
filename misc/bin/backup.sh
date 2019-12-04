@@ -27,7 +27,7 @@ fi
 
 echo_heading "Backing up to mount point $MOUNT"
 
-cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human-readable --filter='. -' $HOME/ "$MOUNT/rsync" | tee $HOME/logs/backup-$(date +%Y-%M-%d).log
+cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human-readable --filter='. -' $HOME/ "$MOUNT/rsync" | tee $HOME/logs/backup-$(date +%Y-%m-%d).log
 # Per-directory overrides.
 # : .rsync-excludes
 

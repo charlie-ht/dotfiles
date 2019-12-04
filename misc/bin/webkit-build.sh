@@ -119,6 +119,7 @@ if test -z "$incremental_build"; then
 	  env ICU_ROOT=$HOME/webkit/deps-prefix/root cmake $src_dir \
 	  -G Ninja \
 	  -DPORT=${port^^} \
+          -DRELEASE_LOG_DISABLED=0 \
 	  -DCMAKE_BUILD_TYPE=$build_type \
 	  -DCMAKE_INSTALL_PREFIX="$install_prefix" \
 	  -DENABLE_GTKDOC=OFF \
