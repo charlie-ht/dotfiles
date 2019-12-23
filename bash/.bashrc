@@ -81,6 +81,7 @@ alias c_dir_size='du -sh'
 alias c_myip='curl http://ipecho.net/plain; echo'
 alias c_myps='ps -U $(whoami) -u $(whoami) u'
 alias c_sprunge="curl -F 'sprunge=<-' http://sprunge.us"
+alias c_find_c_or_cpp_files='find . -name "*.cpp" -o -name "*.c" -o -name "*.h" -o -name "*.hpp" -o -name "*.cc" -o -name "*.cxx" -o -name "*.hxx"'
 alias pypath="echo $PYTHONPATH | tr ':' '\n'"
 
 function c_file_times()
@@ -151,7 +152,6 @@ function c_extract {
     fi
 }
 
-alias c_find_c_or_cpp_files='find . -name "*.cpp" -o -name "*.c" -o -name "*.h" -o -name "*.hpp" -o -name "*.cc" -o -name "*.cxx" -o -name "*.hxx"'
 function c_fd() {
     local name=$1
     find . -name "*$name*"
@@ -249,14 +249,12 @@ function c_gst_plugins() {
 }
 
 ### WebKit
-export WK_SOURCE_DIR=$HOME/webkit/webkit-git
+export WK_SOURCE_DIR=$HOME/webkit/WebKit
 function c_wk_grep_expectations() {
     find $WK_SOURCE_DIR/LayoutTests -name "TestExpectations" | xargs grep -rn $@
 }
 
-function c_wk_open_test_results() {
-    $HOME/stage/firefox/firefox file://$HOME/webkit-test/
-}
+alias c_wk_test_results='x-www-browser file://$HOME/webkit-test/results.html'
 
 ### Git
 # When you've forgotten everything again, git help -ag is useful to
@@ -272,13 +270,13 @@ function c_git_ignore_untracked_files() {
 }
 
 ## Mail utilities
-function igalia_mail_db() {
+function c_igalia_db() {
     command=$1
     shift
     notmuch $command 'path:igalia/**' and $@
 }
 
-function gmail_db() {
+function c_gmail_db() {
     command=$1
     shift
     notmuch $command 'path:chturne_gmail/**' and $@

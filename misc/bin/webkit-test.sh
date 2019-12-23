@@ -18,11 +18,15 @@ usage() {
     echo "      --gst-debug=*:2             - set the GST_DEBUG variable"
     echo "      --debug - will pause the WebProcess on startup to allow GDB attachment"
     echo "      ... - remaining args are paths under LayoutTests. My default is http/tests/media fast/media fast/mediastream media imported/w3c/web-platform-tests/media imported/web-platform-tests/encrypted-media imported/w3c/web-platform-tests/media-source webaudio"
+    echo "      --eme    - run a set of tests for EME"
     echo
 }
 
 while test -n "$1"; do
     case "$1" in
+        --eme)
+            tests='media/encrypted-media imported/w3c/web-platform-tests/encrypted-media/clearkey* http/tests/media/clearkey'
+            ;;
         --gst-debug=*)
             gst_debug="${1#--gst-debug=}"
             ;;
@@ -121,9 +125,10 @@ time jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run \
 	--additional-env-var="GST_REGISTRY=$GST_REGISTRY" \
 	--additional-env-var="GST_PLUGIN_SCANNER=$GST_PLUGIN_SCANNER" \
 	--additional-env-var="GST_PRESET_PATH=$GST_PRESET_PATH" \
-	--additional-env-var='WEBKIT_DEBUG=Media,Events' \
+	--additional-env-var='WEBKIT_DEBUG=Media,Events,ProcessSuspension' \
 	--additional-env-var="GST_DEBUG=$gst_debug" \
 	--additional-env-var="GST_DEBUG_NO_COLOR=1" \
+	--additional-env-var="DISABLE_NI_WARNING=1" \
 	$dump_dots_args \
 	$debug_args \
 	--debug-rwt-logging \
@@ -136,4 +141,4 @@ time jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run \
 	--child-processes=8 \
 	--no-show-results \
 	--no-retry-failures \
-	$passthru
+	$passthru $tests

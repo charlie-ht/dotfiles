@@ -3,6 +3,12 @@
 D=$(dirname $(readlink -f $0))
 source $D/common.sh
 
+# These are the steps to mirror the apt status, I don't know a good way of automating this.
+# computer1$ apt-clone clone cnut.clone
+# scp cnut.clone* computer2
+# computer2$ sudo apt-clone restore cnut.clone*
+# And now you should have the same sets of packages.
+
 rsync_dry_run='-n'
 
 while test -n "$1"; do
@@ -32,12 +38,15 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 # : .rsync-excludes
 
 # Selectively include dotfiles
++ .Xresources
++ .Xresources.d
 + .bash_history
 + .bash_logout
 + .bash_profile
 + .bashrc
 + .config
 + .emacs
++ .getmail
 + .gitconfig
 + .gnupg
 + .gtk-bookmarks
@@ -60,8 +69,6 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 + .vimrc
 + .wget-hsts
 + .xchm
-+ .Xresources
-+ .Xresources.d
 # Make sure this stays as the last thing after the explicit includes.
 - /.*
 

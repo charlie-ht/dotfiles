@@ -6,7 +6,7 @@ source $D/common.sh
 source $D/webkit-common.sh
 
 GST_DEBUG='*:2'
-WEBKIT_DEBUG='EME,Media'
+WEBKIT_DEBUG='All'
 
 while test -n "$1"; do
     case "$1" in
@@ -83,11 +83,13 @@ env Malloc=1 \
     GST_DEBUG=$GST_DEBUG \
     GST_DEBUG_DUMP_DOT_DIR=/tmp/ \
     WEBKIT_DEBUG=$WEBKIT_DEBUG \
+    DISABLE_NI_WARNING=1 \
     $cmd_prefix $build_dir/bin/MiniBrowser \
     --enable-write-console-messages-to-stdout=1 \
     --enable-encrypted-media=1 \
     --enable-mediasource=1 \
     --allow-file-access-from-file-urls=1 \
+    --allow-universal-access-from-file-urls=1 \
     --dark-mode \
     $passthru |& tee -a run.log
 

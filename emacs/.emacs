@@ -96,15 +96,13 @@ There are two things you can do about this warning:
   :ensure t
   :bind (("C-x g" . magit-status)))
 
-
-(global-set-key (kbd "C-c C-k") 'compile)
-
 (use-package cc-mode
   :defer t
   :after compile
   :config
   (defun cht-c-mode-hook ()
     (hs-minor-mode)
+    (local-set-key (kbd "C-c C-k") 'compile)
     (local-set-key (kbd "<f10>") 'hs-hide-block)
     (local-set-key (kbd "<f11>") 'hs-show-block))
   (add-hook 'cc-mode-hook 'cht-c-mode-hook)
@@ -200,6 +198,15 @@ There are two things you can do about this warning:
   (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
   (setq rust-format-on-save t)))
 
+(progn
+  (require 'html-mode)
+(define-skeleton html-headline-6
+  "HTML strong tag"
+  nil
+  "<strong>" _ "</strong>")
+
+  (define-key html-mode-map (kbd "C-c b") '
+
 
 (defun elisp-insert-evaluation ()
   (interactive)
@@ -209,6 +216,7 @@ There are two things you can do about this warning:
 
 (setq cht-paths-to-top-level-search-directories-assoc
       (list
+       (cons ".*/gst-build/.*" "/home/cht/gstreamer/gst-build/subprojects/")
        (cons ".*/WebKit/Tools/.*" "/home/cht/webkit/WebKit/Tools/")
        (cons ".*/WebKit/Source/.*" "/home/cht/webkit/WebKit/Source/")))
 
@@ -228,8 +236,18 @@ There are two things you can do about this warning:
       (error "No search path matches the cwd"))))
 (global-set-key (kbd "<f9>") 'cht-project-search)
 
-
-
+(defun cht/revert-all-no-confirm ()
+  "Revert all file buffers, without confirmation.
+Buffers visiting files that no longer exist are ignored.
+Files that are not readable (including do not exist) are ignored.
+Other errors while reverting a buffer are reported only as messages."
+  (interactive)
+  (let (file)
+    (dolist (buf  (buffer-list))
+      (setq file  (buffer-file-name buf))
+      (when (and file  (file-readable-p file))
+        (with-current-buffer buf
+          (with-demoted-errors "Error: %S" (revert-buffer t t)))))))
 
 (defun webkit-resolve-traceback-line (line)
  "Resolve a non-symbolic trace to a symbolic function name using

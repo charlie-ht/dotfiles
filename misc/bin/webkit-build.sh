@@ -9,10 +9,14 @@ D=$(dirname $(readlink -f $0))
 source $D/common.sh
 source $D/webkit-common.sh
 
-extra_cmake_args='-DLOG_DISABLED=0 -DENABLE_MEDIA_SOURCE=ON -DENABLE_ENCRYPTED_MEDIA=ON'
+extra_cmake_args=''
 
 while test -n "$1"; do
     case "$1" in
+        --clang)
+            CXX=clang++-8
+            CC=clang-8
+            ;;
         --src-dir=*)
             src_dir="${1#--src-dir=}"
             ;;
@@ -116,10 +120,9 @@ export CXXFLAGS='-DLOG_DISABLED=0'
 if test -z "$incremental_build"; then
     echo_heading "Reconfiguring build-directory"
     jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run \
-	  env ICU_ROOT=$HOME/webkit/deps-prefix/root cmake $src_dir \
+	  env ICU_ROOT=$HOME/webkit/deps-prefix/root CC=$CC CXX=$CXX cmake $src_dir \
 	  -G Ninja \
 	  -DPORT=${port^^} \
-          -DRELEASE_LOG_DISABLED=0 \
 	  -DCMAKE_BUILD_TYPE=$build_type \
 	  -DCMAKE_INSTALL_PREFIX="$install_prefix" \
 	  -DENABLE_GTKDOC=OFF \
@@ -128,6 +131,10 @@ if test -z "$incremental_build"; then
 	  -DDEVELOPER_MODE=ON \
 	  -DENABLE_MINIBROWSER=ON \
 	  -DENABLE_BUBBLEWRAP_SANDBOX=OFF \
+          -DENABLE_MEDIA_SOURCE=ON \
+          -DENABLE_ENCRYPTED_MEDIA=ON \
+          -DLOG_DISABLED=0 \
+          -DRELEASE_LOG_DISABLED=0 \
 	  $extra_cmake_args
     echo_heading "Running Ninja"
     time jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run ninja -j$NUM_CORES
