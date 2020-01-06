@@ -14,8 +14,8 @@ extra_cmake_args=''
 while test -n "$1"; do
     case "$1" in
         --clang)
-            CXX=clang++-8
-            CC=clang-8
+            CXX=/usr/lib/icecc/bin/clang++
+            CC=/usr/lib/icecc/bin/clang
             ;;
         --src-dir=*)
             src_dir="${1#--src-dir=}"
@@ -100,7 +100,7 @@ if ! test -d "$build_dir"; then
     mkdir $build_dir
 fi
 
-install_prefix=$HOME/webkit/install-$port-$branch-$build_type
+install_prefix=$HOME/build/webkit/install-$port-$branch-$build_type
 
 echo_heading "=== Configuring WebKit"
 pushd $build_dir 2>&1>/dev/null

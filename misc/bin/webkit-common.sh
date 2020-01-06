@@ -1,13 +1,16 @@
+GSTREAMER_ROOT=$HOME/gstreamer/gst-build
+
 if [[ -z $GST_ENV || $GST_ENV -ne "gst-master" ]]; then
-    echo "Not in a gst-master uninstalled environment, aborting!"
-    exit 1
+    echo_warning "Not in a gst-environment, setting that up now"
+    eval $($GSTREAMER_ROOT/gst-env.py --only-environment)
 fi
 
 if [ $(hostname) == "cnut" ]; then
     NUM_CORES=28
-elif [ $(hostname) == "h1n1" ]; then
+elif [ $(hostname) == "deimos" ]; then
     # FIXME: How do I detect if Icecream is available? Need to tone this down when on the the road.
-    NUM_CORES=12
+    #    I'll just assume it's there...
+    NUM_CORES=40
 elif [ $(hostname) == "hp-laptop" ]; then
     NUM_CORES=3
 else

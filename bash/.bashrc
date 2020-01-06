@@ -95,9 +95,9 @@ alias pypath="echo $PYTHONPATH | tr ':' '\n'"
 export EDITOR='emacsclient'
 export PAGER=less
 
-#####################
-# General Functions #
-#####################
+######################
+# Path Manipulations #
+######################
 
 pathmunge ()
 {
@@ -109,13 +109,26 @@ pathmunge ()
         fi
     fi
 }
-path_append_if_missing ()
+path_prepend_if_missing ()
 {
     local pathname="$1"
     if [ -d $pathname ]; then
         pathmunge $pathname
     fi
 }
+
+path_prepend_if_missing $HOME/bin
+path_prepend_if_missing $HOME/.local/bin
+# Rust toolchain
+path_prepend_if_missing $HOME/.cargo/bin
+# Programs I have compiled myself.
+path_prepend_if_missing $HOME/build/bin
+# Icecc
+path_prepend_if_missing /usr/lib/icecc/bin
+
+#####################
+# General Functions #
+#####################
 
 c_file_times ()
 {
@@ -249,12 +262,6 @@ c_br_ccache_zero_stats () {
 #######################
 # GStreamer Functions #
 #######################
-
-c_gst_enter() {
-    pushd $HOME/gstreamer/gst-build &>/dev/null
-    ninja -C build/ uninstalled
-    popd &>/dev/null
-}
 c_gst_plugins() {
     plugin_name=$1
     IFS=:
@@ -272,6 +279,24 @@ c_gst_plugins() {
 alias c_wk_test_results='x-www-browser file://$HOME/webkit-test/results.html'
 
 export WK_SOURCE_DIR=$HOME/webkit/WebKit
+
+c_wk_enter() {
+    gst_env=$($HOME/gstreamer/gst-build/gst-env.py --only-environment)
+    >/tmp/bashrc
+    cat ~/.bashrc >> /tmp/bashrc
+    cat <<EOF >> /tmp/bashrc
+
+$gst_env
+
+export PS1="[webkit] $PS1"
+cd $HOME/webkit/WebKit
+git status
+
+EOF
+
+    bash --rcfile /tmp/bashrc
+}
+
 
 c_wk_grep_expectations () {
     find $WK_SOURCE_DIR/LayoutTests -name "TestExpectations" | xargs grep -rn $@

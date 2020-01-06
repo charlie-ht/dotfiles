@@ -1,3 +1,5 @@
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+
 (require 'package)
 (let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
                     (not (gnutls-available-p))))
@@ -57,6 +59,50 @@ There are two things you can do about this warning:
               desktop-base-file-name "desktop-"
 )
 (add-to-list 'desktop-path "/home/cht/.emacs-desktop/")
+
+;; do not get asked whether to perform auto insertions on new files
+(setq-default auto-insert-query nil)
+(setq-default auto-insert-alist
+  '((("\\.\\([Hh]\\|hh\\|hpp\\|hxx\\|h\\+\\+\\)\\'" . "C / C++ header")
+     nil
+     comment-start
+     "Copyright (C) " `(format-time-string "%Y") " Igalia. S.L. All rights reserved."
+     comment-end
+     \n "#pragma once"
+     \n \n
+     _ )
+
+    (("\\.\\([Cc]\\|cc\\|cpp\\|cxx\\|c\\+\\+\\)\\'" . "C / C++ program")
+     nil
+     "#include \""
+     (let ((stem (file-name-sans-extension buffer-file-name))
+           ret)
+       (dolist (ext '("H" "h" "hh" "hpp" "hxx" "h++") ret)
+         (when (file-exists-p (concat stem "." ext))
+           (setq ret (file-name-nondirectory (concat stem "." ext))))))
+     & ?\" | -10
+     \n \n
+     "int main()
+{"
+     > _
+     "}")
+
+    (("\\.\\(pl\\|pm\\)\\'" . "Perl program")
+     nil
+     "#!/usr/bin/perl -w"
+     \n comment-start
+     "Copyright (C) " `(format-time-string "%Y") " by Charles Turner. All rights reserved."
+     comment-end \n
+
+  "use strict;
+use warnings;
+use diagnostics;
+use v5.28;\n\n"
+  > _
+  )
+
+    ))
+(add-hook 'find-file-hook 'auto-insert)
 
 (defun cht-text-mode-hook ()
   (local-set-key (kbd "C-;") 'ispell-complete-word)
@@ -135,6 +181,19 @@ There are two things you can do about this warning:
                                file-name file-name-sans-suffix)))
               compile-command)))))))
           
+;;;###autoload
+(define-skeleton cht-perl-template
+  "Insert a copyright by $ORGANIZATION notice at cursor."
+  "Company: "
+  comment-start
+  "Copyright (C) " `(format-time-string "%Y") " by "
+  (or (getenv "ORGANIZATION")
+      str)
+  '(if (copyright-offset-too-large-p)
+       (message "Copyright extends beyond `copyright-limit' and won't be updated automatically."))
+  comment-end \n)
+
+
 (use-package helm-descbinds
   :defer t
   :ensure t
@@ -152,21 +211,6 @@ There are two things you can do about this warning:
 	try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill
 	try-complete-lisp-symbol-partially try-complete-lisp-symbol))
 (define-key minibuffer-local-map (kbd "C-<tab>") 'hippie-expand)
-
-(use-package company               
-  :ensure t
-  :defer t
-  :init (global-company-mode)
-  :config
-  (progn
-    ;; Use Company for completion
-    (bind-key [remap completion-at-point] #'company-complete company-mode-map)
-
-    (setq company-tooltip-align-annotations t
-          ;; Easy navigation to candidates with M-<n>
-          company-show-numbers t)
-    (setq company-dabbrev-downcase nil))
-  :diminish company-mode)
 
 (use-package rust-mode
   :ensure t
@@ -292,7 +336,7 @@ function names for a number of frames."
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
+    (xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

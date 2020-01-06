@@ -6,7 +6,7 @@ source $D/common.sh
 source $D/webkit-common.sh
 
 GST_DEBUG='*:2'
-WEBKIT_DEBUG='All'
+WEBKIT_DEBUG='Media,EME'
 
 while test -n "$1"; do
     case "$1" in
