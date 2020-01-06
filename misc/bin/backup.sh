@@ -70,6 +70,7 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 + .wget-hsts
 + .xchm
 # Make sure this stays as the last thing after the explicit includes.
+- .local/share/Trash
 - /.*
 
 # Selectively exclude files
@@ -79,12 +80,10 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 - *~
 - *.swp
 - *#*
-- *ccache*
 - Qt/
 - /webkit/build*/
 - /webkit/deps*/
 - /igalia/metro/poky/
 - /buildroot/**/dl/
 - /buildroot/**/output*/
-- /buildroot/**/ccache/
 EOF

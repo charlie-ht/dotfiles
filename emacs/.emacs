@@ -39,7 +39,7 @@ There are two things you can do about this warning:
 
 (global-set-key (kbd "C-;") 'completion-at-point)
 
-(setq-default backup-directory-alist `(("." . "~/.saves"))
+(setq-default backup-directory-alist `(("." . "~/.emacs.d/saves"))
       backup-by-copying t
       delete-old-versions t
       kept-new-versions 6
@@ -57,7 +57,6 @@ There are two things you can do about this warning:
               desktop-base-file-name "desktop-"
 )
 (add-to-list 'desktop-path "/home/cht/.emacs-desktop/")
-;desktop-path
 
 (defun cht-text-mode-hook ()
   (local-set-key (kbd "C-;") 'ispell-complete-word)
@@ -197,16 +196,6 @@ There are two things you can do about this warning:
   (add-hook 'rust-mode-hook #'racer-mode)
   (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
   (setq rust-format-on-save t)))
-
-(progn
-  (require 'html-mode)
-(define-skeleton html-headline-6
-  "HTML strong tag"
-  nil
-  "<strong>" _ "</strong>")
-
-  (define-key html-mode-map (kbd "C-c b") '
-
 
 (defun elisp-insert-evaluation ()
   (interactive)

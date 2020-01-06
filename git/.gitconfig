@@ -6,6 +6,7 @@
 	st = status -s
 	di = diff
 	ca = commit -a
+        ada = add -A
         stepback = reset --hard HEAD~1
 	unstage = reset HEAD --
         llog = log --date=local
@@ -20,7 +21,7 @@
 	cl = git clean -fd
 [user]
 	name = Charlie Turner
-	email = cturner@igalia.com
+	email = mail@charles.plus
 [core]
 	editor = vim
 # https://stackoverflow.com/questions/34119866/setting-up-and-using-meld-as-your-git-difftool-and-mergetool

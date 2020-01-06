@@ -1,5 +1,9 @@
 # -*- shell-script -*-
 
+###############################
+# General shell configuration #
+###############################
+
 # If not running interactively, don't do anything
 case $- in
     *i*) ;;
@@ -59,6 +63,10 @@ fi
 
 trap 'test -n "$SSH_AUTH_SOCK" && eval `/usr/bin/ssh-agent -k` &> /dev/null' 0
 
+###########
+# Aliases #
+###########
+
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --color=auto'
@@ -84,39 +92,65 @@ alias c_sprunge="curl -F 'sprunge=<-' http://sprunge.us"
 alias c_find_c_or_cpp_files='find . -name "*.cpp" -o -name "*.c" -o -name "*.h" -o -name "*.hpp" -o -name "*.cc" -o -name "*.cxx" -o -name "*.hxx"'
 alias pypath="echo $PYTHONPATH | tr ':' '\n'"
 
-function c_file_times()
+export EDITOR='emacsclient'
+export PAGER=less
+
+#####################
+# General Functions #
+#####################
+
+pathmunge ()
+{
+    if ! echo "$PATH" | /bin/grep -Eq "(^|:)$1($|:)" ; then
+        if [ "$2" = "after" ] ; then
+            PATH="$PATH:$1"
+        else
+            PATH="$1:$PATH"
+        fi
+    fi
+}
+path_append_if_missing ()
+{
+    local pathname="$1"
+    if [ -d $pathname ]; then
+        pathmunge $pathname
+    fi
+}
+
+c_file_times ()
 {
     echo "birth access mod status filename"
     /usr/bin/stat --format="%W %X %Y %Z %n" $@
 }
 
 # http://stackoverflow.com/a/23710535/1777162
-function c_copy_last_command()
+c_copy_last_command ()
 {
     history -p '!!' |tr -d \\n | clip;
 }
 
-function c_simple_date()
+c_simple_date ()
 {
-	date +"%d%m%Y-%H%M%S"
+    date +"%d%m%Y-%H%M%S"
 }
 
 # Return the top-10 most common commands in your history.
-function c_top10_commands()
+c_top10_commands ()
 {
     history | awk '{CMD[$2]++;count++;}END { for (a in CMD)print CMD[a] " " CMD[a]/count*100 "% " a;}' | grep -v "./" | column -c3 -s " " -t | sort -nr | nl |  head -n10
 }
 
 # 40% quality seems to give good compression ratio and the output
 # looks fine for the images I've needed to compress.
-function c_img_compress()
+c_img_compress ()
 {
-	extension="${1##*.}"
-	filename="${1%.*}"
-	convert -strip -quality 40 $1 $filename_smaller.$extension
+    extension="${1##*.}"
+    filename="${1%.*}"
+    convert -strip -quality 40 $1 $filename_smaller.$extension
 }
 
-function c_extract {
+c_extract ()
+{
     if [ -z "$1" ]; then
 	# display usage if no parameters given
 	echo "Usage: extract <path/file_name>.<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
@@ -152,20 +186,21 @@ function c_extract {
     fi
 }
 
-function c_fd() {
+c_fd () {
     local name=$1
     find . -name "*$name*"
 }
 
-function ewhich() {
+ewhich () {
     $HOME/stage/bin/emacsclient -n $(which $1)
 }
 
-function c_view_dot() {
+c_view_dot () {
+    # xdot is a handy alternative if it works for you
     dot -Tpdf -o /tmp/dot.pdf $1
 }
 
-function c_html_template() {
+c_html_template () {
     local name=$1
     cat <<EOF > $name
 <!DOCTYPE html>
@@ -188,95 +223,87 @@ function c_html_template() {
 EOF
 }
 
-## Buildroot helpers
+############################
+# Buildroot Configurations #
+############################
+
 alias c_br_list_configs='make list-defconfigs'
 alias c_br_full_rebuild='make clean all'
 alias c_br_configure_busybox='make busybox-menuconfig'
 alias c_br_configure_linux='make linux-menuconfig'
 alias c_br_serial_rpi3='sudo picocom -b 115200 /dev/ttyUSB0'
 
-function c_br_metro_enter()
+c_br_rebuild_pkg ()
 {
-    local base_dir="$HOME/buildroot/metro/buildroot"
-    if ! [[ -d $base_dir ]]; then
-        echo "metro buildroot checkout does not exist"
-        return 1
-    fi
-
-    pushd $base_dir &> /dev/null
-    head=$(git rev-parse --symbolic-full-name --abbrev-ref HEAD)
-    cp ~/.bashrc /tmp/wk_bashrc
-    cat  >> /tmp/wk_bashrc <<EOF
-export PS1="\n[metro buildroot $head]\n$PS1"
-EOF
-    bash --rcfile /tmp/wk_bashrc
-    popd &> /dev/null
+    local pkg=$1
+    make ${pkg}_dirclean ${pkg}
+}
+c_br_ccache_set_max_size () {
+    local limit=$1
+    make CCACHE_OPTIONS="--max-size=${limit}" ccache-options
+}
+c_br_ccache_zero_stats () {
+    make CCACHE_OPTIONS="--zero-stats" ccache-options
 }
 
-function c_br_save_config()
-{
-	make savedefconfig BR2_DEFCONFIG=defconfig-$(c_simple_date)
-}
+#######################
+# GStreamer Functions #
+#######################
 
-function c_br_rebuild_pkg()
-{
-	local pkg=$1
-	make ${pkg}_dirclean ${pkg}
-}
-function c_br_ccache_set_max_size() {
-	local limit=$1
-	make CCACHE_OPTIONS="--max-size=${limit}" ccache-options
-}
-function c_br_ccache_zero_stats() {
-	make CCACHE_OPTIONS="--zero-stats" ccache-options
-}
-
-### GStreamer
-function c_gst_enter() {
+c_gst_enter() {
     pushd $HOME/gstreamer/gst-build &>/dev/null
     ninja -C build/ uninstalled
     popd &>/dev/null
 }
-
-function c_gst_plugins() {
-	plugin_name=$1
-	IFS=:
-	for path in $GST_PLUGIN_PATH ; do
-		if [ -d $path ] ; then
-			find $path -name "*$plugin_name*"
-		fi
-	done
+c_gst_plugins() {
+    plugin_name=$1
+    IFS=:
+    for path in $GST_PLUGIN_PATH ; do
+	if [ -d $path ] ; then
+	    find $path -name "*$plugin_name*"
+	fi
+    done
 }
 
-### WebKit
-export WK_SOURCE_DIR=$HOME/webkit/WebKit
-function c_wk_grep_expectations() {
-    find $WK_SOURCE_DIR/LayoutTests -name "TestExpectations" | xargs grep -rn $@
-}
+####################
+# WebKit Functions #
+####################
 
 alias c_wk_test_results='x-www-browser file://$HOME/webkit-test/results.html'
 
-### Git
+export WK_SOURCE_DIR=$HOME/webkit/WebKit
+
+c_wk_grep_expectations () {
+    find $WK_SOURCE_DIR/LayoutTests -name "TestExpectations" | xargs grep -rn $@
+}
+
+#################
+# Git Functions #
+#################
+
 # When you've forgotten everything again, git help -ag is useful to
 # see all the stuff you need to read again...
 alias gith='git help -w'
 
-function c_git_find_reviewers() {
+c_git_find_reviewers () {
     git blame --line-porcelain $1 | sed -n 's/^author //p' | sort | uniq -c | sort -rn
 }
 
-function c_git_ignore_untracked_files() {
+c_git_ignore_untracked_files () {
     git status --porcelain | grep '^??' | cut -c4- >> .gitignore
 }
 
-## Mail utilities
-function c_igalia_db() {
+###################
+# EMail Functions #
+###################
+
+c_igalia_db () {
     command=$1
     shift
     notmuch $command 'path:igalia/**' and $@
 }
 
-function c_gmail_db() {
+c_gmail_db () {
     command=$1
     shift
     notmuch $command 'path:chturne_gmail/**' and $@
