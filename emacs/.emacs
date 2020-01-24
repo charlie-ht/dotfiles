@@ -41,6 +41,8 @@ There are two things you can do about this warning:
 
 (global-set-key (kbd "C-;") 'completion-at-point)
 
+(global-auto-revert-mode t)
+
 (setq-default backup-directory-alist `(("." . "~/.emacs.d/saves"))
       backup-by-copying t
       delete-old-versions t
@@ -59,6 +61,15 @@ There are two things you can do about this warning:
               desktop-base-file-name "desktop-"
 )
 (add-to-list 'desktop-path "/home/cht/.emacs-desktop/")
+
+(require 'ansi-color)
+(defun display-ansi-colors ()
+  (interactive)
+  (ansi-color-apply-on-region (point-min) (point-max)))
+(defun display-ansi-colors-on-region ()
+  (interactive)
+  (ansi-color-apply-on-region (region-beginning) (region-end)))
+
 
 ;; do not get asked whether to perform auto insertions on new files
 (setq-default auto-insert-query nil)
@@ -141,45 +152,45 @@ use v5.28;\n\n"
   :ensure t
   :bind (("C-x g" . magit-status)))
 
-(use-package cc-mode
-  :defer t
-  :after compile
-  :config
-  (defun cht-c-mode-hook ()
-    (hs-minor-mode)
-    (local-set-key (kbd "C-c C-k") 'compile)
-    (local-set-key (kbd "<f10>") 'hs-hide-block)
-    (local-set-key (kbd "<f11>") 'hs-show-block))
-  (add-hook 'cc-mode-hook 'cht-c-mode-hook)
+;; (use-package cc-mode
+;;   :defer t
+;;   :after compile
+;;   :config
+;;   (defun cht-c-mode-hook ()
+;;     (hs-minor-mode)
+;;     (local-set-key (kbd "C-c C-k") 'compile)
+;;     (local-set-key (kbd "<f10>") 'hs-hide-block)
+;;     (local-set-key (kbd "<f11>") 'hs-show-block))
+;;   (add-hook 'cc-mode-hook 'cht-c-mode-hook)
 
-  (defconst my-cc-style
-  '("k&r"
-    (c-offsets-alist . ((innamespace . [0])))))
-  (setq c-default-style '((java-mode . "java")
-                          (awk-mode . "awk")
-                          (c++-mode . "my-cc-style")
-                          (c-mode . "my-cc-style")
-                          (other . "k&r")))
-  (defvar compile-guess-command-table
-    '((c-mode . "cc -Wall -Wextra -g %s -o %s -lm")
-      (c++-mode . "c++ -Wall -Wextra -std=c++17 -g %s -o %s -lm")))
-  (defun compile-guess-command ()
-    (let ((command-for-mode (cdr (assq major-mode compile-guess-command-table))))
-      (when (and command-for-mode (stringp buffer-file-name))
-        (let* ((file-name (file-name-nondirectory buffer-file-name))
-               (file-name-sans-prefix (when (and (string-match "\\.[^.]*\\'" file-name)
-                                                 (> (match-beginning 0) 0))
-                                        (substring file-name 0 (match-beginning 0)))))
-          (when file-name-sans-suffix
-            (progn
-              (make-local-variable 'compile-command)
-              (setq compile-commond
-                    (if (stringp command-for-mode)
-                        (format command-for-mode
-                                file-name filename-sans-suffix)
-                      (funcall command-for-mode
-                               file-name file-name-sans-suffix)))
-              compile-command)))))))
+;;   (defconst my-cc-style
+;;   '("k&r"
+;;     (c-offsets-alist . ((innamespace . [0])))))
+;;   (setq c-default-style '((java-mode . "java")
+;;                           (awk-mode . "awk")
+;;                           (c++-mode . "my-cc-style")
+;;                           (c-mode . "my-cc-style")
+;;                           (other . "k&r")))
+;;   (defvar compile-guess-command-table
+;;     '((c-mode . "cc -Wall -Wextra -g %s -o %s -lm")
+;;       (c++-mode . "c++ -Wall -Wextra -std=c++17 -g %s -o %s -lm")))
+;;   (defun compile-guess-command ()
+;;     (let ((command-for-mode (cdr (assq major-mode compile-guess-command-table))))
+;;       (when (and command-for-mode (stringp buffer-file-name))
+;;         (let* ((file-name (file-name-nondirectory buffer-file-name))
+;;                (file-name-sans-prefix (when (and (string-match "\\.[^.]*\\'" file-name)
+;;                                                  (> (match-beginning 0) 0))
+;;                                         (substring file-name 0 (match-beginning 0)))))
+;;           (when file-name-sans-suffix
+;;             (progn
+;;               (make-local-variable 'compile-command)
+;;               (setq compile-commond
+;;                     (if (stringp command-for-mode)
+;;                         (format command-for-mode
+;;                                 file-name filename-sans-suffix)
+;;                       (funcall command-for-mode
+;;                                file-name file-name-sans-suffix)))
+;;               compile-command)))))))
           
 ;;;###autoload
 (define-skeleton cht-perl-template
@@ -193,6 +204,36 @@ use v5.28;\n\n"
        (message "Copyright extends beyond `copyright-limit' and won't be updated automatically."))
   comment-end \n)
 
+
+(define-skeleton cht/skel-fflush-msg
+  "Insert a copyright by $ORGANIZATION notice at cursor."
+  nil
+  > "fprintf(stderr, \"CHT: " _ "\\n\"); fflush(stderr);"
+)
+(defun cht/c-common-mode-keys (map)
+  "Set my personal keys for C and C++. 
+Argument MAP is c-mode-map or c++-mode-map."
+  (message "Setting keys for common c mode.")
+  (define-key map '[(meta tab)]               #'hippie-expand)
+
+  ;(define-key map '[(control b) (control b)]  #'compile)
+  ;; macros, templates, skeletons:
+  (define-key map (kbd "C-c m p") #'cht/skel-fflush-msg)
+  )
+(require 'eglot)
+(add-to-list 'eglot-server-programs '((c++-mode c-mode) "clangd"))
+(add-hook 'c-mode-hook 'eglot-ensure)
+(add-hook 'c++-mode-hook 'eglot-ensure)
+(add-hook 'c++-mode-hook
+          (lambda ()
+            ;; my keybindings
+            (cht/c-common-mode-keys c++-mode-map)
+            ))
+(add-hook 'c-mode-hook
+          (lambda ()
+            ;; my keybindings
+            (cht/c-common-mode-keys c-mode-map)
+            ))
 
 (use-package helm-descbinds
   :defer t
@@ -329,6 +370,13 @@ function names for a number of frames."
    nil
    nil))
 
+(defvar *webkit-trac-base-url* "https://trac.webkit.org/browser/webkit/trunk/")
+(defun webkit-track-url-for-src-file ()
+  (interactive)
+  (let* ((buffer-name (buffer-file-name))
+         (wk-src-path (s-chop-prefix "/home/cht/webkit/WebKit/" buffer-name)))
+    (browse-url (format "%s%s#L%s" *webkit-trac-base-url* wk-src-path (line-number-at-pos)))))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -336,7 +384,7 @@ function names for a number of frames."
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
+    (eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

@@ -1,6 +1,6 @@
 GSTREAMER_ROOT=$HOME/gstreamer/gst-build
 
-if [[ -z $GST_ENV || $GST_ENV -ne "gst-master" ]]; then
+if [[ -z $GST_ENV ]]; then
     echo_warning "Not in a gst-environment, setting that up now"
     eval $($GSTREAMER_ROOT/gst-env.py --only-environment)
 fi
@@ -32,3 +32,8 @@ normalize_branch() {
     branch=$(echo $branch | sed -e 's/[^A-Za-z0-9._-]/_/g')
 }
 
+WEBKIT_EVENTS=Events,PlatformLeaks
+WEBKIT_NETWORK_CHANNELS=Network,NetworkCache,NetworkCacheSpeculativePreloading,NetworkCacheStorage,NetworkScheduling,NetworkSession,Loading,LocalStorageDatabaseTracker,ProximityNetworking,ResourceLoadStatistics,Storage,ContentFiltering,ResourceLoading,ResourceLoadObserver,ResourceLoadStatistics
+WEBKIT_MEDIA_CHANNELS=Fullscreen,Media,WebRTC,Images,MediaCaptureSamples,MediaQueries,MediaSource,MediaStream,MediaSourceSamples,WebAudio,WebGPU,WebRTCStats,EME
+WEBKIT_IPC=IPC,Process,ProcessSuspension,ProcessSwapping,MessagePorts
+WEBKIT_PERF=VirtualMemory,VisibleRects,WebGL,Animations,Compositing,CompositingOverlap,MemoryPressure,PerformanceLogging,SVG,Tiling,Threading

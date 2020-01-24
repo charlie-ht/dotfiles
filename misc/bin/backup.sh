@@ -23,7 +23,6 @@ while test -n "$1"; do
     shift
 done
 
-
 MOUNT=/media/cht/Backup
 
 if ! test -d $MOUNT; then
@@ -33,7 +32,7 @@ fi
 
 echo_heading "Backing up to mount point $MOUNT"
 
-cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human-readable --filter='. -' $HOME/ "$MOUNT/rsync" | tee $HOME/logs/backup-$(date +%Y-%m-%d).log
+cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human-readable --filter='. -' $HOME/ "$MOUNT/rsync" | tee $HOME/logs/backup-$(date +%Y-%m-%d-%H%M%S).log
 # Per-directory overrides.
 # : .rsync-excludes
 
@@ -56,6 +55,7 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 + .password-store
 + .pki
 + .profile
++ .reportbugrc
 + .saves
 + .ssh
 + .steam
@@ -84,6 +84,8 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 - /webkit/build*/
 - /webkit/deps*/
 - /igalia/metro/poky/
-- /buildroot/**/dl/
-- /buildroot/**/output*/
+- /igalia/wpe/**/build/
+- /igalia/wpe/buildroot/dl/
+- /igalia/wpe/buildroot/output/
+- /gstreamer/gst-build/build/
 EOF

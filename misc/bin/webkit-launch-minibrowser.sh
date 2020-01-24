@@ -6,7 +6,8 @@ source $D/common.sh
 source $D/webkit-common.sh
 
 GST_DEBUG='*:2'
-WEBKIT_DEBUG='Media,EME'
+WEBKIT_DEBUG="$WEBKIT_EVENTS,$WEBKIT_MEDIA_CHANNELS"
+WEBKIT_DEBUG='EME'
 
 while test -n "$1"; do
     case "$1" in
@@ -88,8 +89,6 @@ env Malloc=1 \
     --enable-write-console-messages-to-stdout=1 \
     --enable-encrypted-media=1 \
     --enable-mediasource=1 \
-    --allow-file-access-from-file-urls=1 \
-    --allow-universal-access-from-file-urls=1 \
     --dark-mode \
     $passthru |& tee -a run.log
 

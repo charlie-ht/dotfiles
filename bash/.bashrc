@@ -129,6 +129,12 @@ path_prepend_if_missing /usr/lib/icecc/bin
 #####################
 # General Functions #
 #####################
+c_gsearch()
+{
+    local search_term=$(urlencode $@)
+    local url="https://google.com/search?q=${search_term}"
+    sensible-browser $url
+}
 
 c_file_times ()
 {
@@ -236,6 +242,7 @@ c_html_template () {
 EOF
 }
 
+
 ############################
 # Buildroot Configurations #
 ############################
@@ -289,9 +296,12 @@ c_wk_enter() {
 $gst_env
 
 export PS1="[webkit] $PS1"
-cd $HOME/webkit/WebKit
-git status
+export WEBKIT_SRC=$HOME/webkit/WebKit
+export PATH=\$PATH:\$WEBKIT_SRC/Tools/Scripts
 
+cd \$WEBKIT_SRC
+git status
+ulimit -c unlimited
 EOF
 
     bash --rcfile /tmp/bashrc
@@ -309,6 +319,7 @@ c_wk_grep_expectations () {
 # When you've forgotten everything again, git help -ag is useful to
 # see all the stuff you need to read again...
 alias gith='git help -w'
+alias git_clean_whitespace='git diff --cached --no-color > stage.diff && git apply --index -R stage.diff && git apply --index --whitespace=fix stage.diff && rm -f stage.diff'
 
 c_git_find_reviewers () {
     git blame --line-porcelain $1 | sed -n 's/^author //p' | sort | uniq -c | sort -rn
@@ -332,4 +343,41 @@ c_gmail_db () {
     command=$1
     shift
     notmuch $command 'path:chturne_gmail/**' and $@
+}
+
+# Debian
+alias cdeb_pkg_update='sudo apt update'
+alias cdeb_pkg_install='sudo apt install'
+alias cdeb_pkg_upgrade='sudo apt upgrade'
+cdeb_pkg_remove ()
+{
+    sudo apt remove $1 && sudo apt purge $1 && sudo apt autoclean
+}
+alias cdeb_pkg_autoremove='sudo apt autoremove'
+alias cdeb_pkg_info='apt show'
+alias cdeb_pkg_search='apt search'
+alias cdeb_pkg_why='aptitude why'
+alias cdeb_pkg_list_manuals="aptitude search '~i!~M'"
+
+cdeb_search_home()
+{
+    c_gsearch "site:debian.org $@"
+}
+cdeb_search_wiki()
+{
+    c_gsearch "site:wiki.debian.org $@"
+}
+cdeb_search_lists()
+{
+    c_gsearch "site:lists.debian.org $@"
+}
+cdeb_openbug () {
+	local id=$1
+	local url="http://bugs.debian.org/${id}"
+	sensible-browser $url
+}
+cdeb_pkgbugs () {
+	local pkg=$1
+	local url="http://bugs.debian.org/${pkg}"
+	sensible-browser $url
 }

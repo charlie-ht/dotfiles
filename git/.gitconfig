@@ -7,6 +7,7 @@
 	di = diff
 	ca = commit -a
         ada = add -A
+        cia = commit --amend
         stepback = reset --hard HEAD~1
 	unstage = reset HEAD --
         llog = log --date=local

@@ -5,7 +5,7 @@ source $D/common.sh
 source $D/webkit-common.sh
 
 src_dir=$HOME/webkit/WebKit
-gst_debug='*:2'
+gst_debug='*:2,webkit*:6'
 
 usage() {
     echo_heading "Usage:"
@@ -125,7 +125,7 @@ time jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run \
 	--additional-env-var="GST_REGISTRY=$GST_REGISTRY" \
 	--additional-env-var="GST_PLUGIN_SCANNER=$GST_PLUGIN_SCANNER" \
 	--additional-env-var="GST_PRESET_PATH=$GST_PRESET_PATH" \
-	--additional-env-var='WEBKIT_DEBUG=Media,Events,ProcessSuspension' \
+	--additional-env-var='WEBKIT_DEBUG=Media,EME,Events,ProcessSuspension' \
 	--additional-env-var="GST_DEBUG=$gst_debug" \
 	--additional-env-var="GST_DEBUG_NO_COLOR=1" \
 	--additional-env-var="DISABLE_NI_WARNING=1" \
