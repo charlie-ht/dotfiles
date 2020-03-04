@@ -3,6 +3,7 @@
 	br = branch
 	brs = branch -r --sort=-committerdate
 	ci = commit
+	ff = pull --ff-only
 	st = status -s
 	di = diff
 	ca = commit -a
