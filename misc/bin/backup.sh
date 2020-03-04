@@ -83,7 +83,9 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 - Qt/
 - /webkit/build*/
 - /webkit/deps*/
-- /igalia/metro/poky/
+- /igalia/metrological/yocto/**/*build*/cache
+- /igalia/metrological/yocto/**/*build*/tmp-glibc
+- /igalia/metrological/yocto/**/*build*/sstate*
 - /igalia/wpe/**/build/
 - /igalia/wpe/buildroot/dl/
 - /igalia/wpe/buildroot/output/
