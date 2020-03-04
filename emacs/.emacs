@@ -53,15 +53,6 @@ There are two things you can do about this warning:
       indent-tabs-mode nil
       debug-on-error t)
 
-(desktop-save-mode 1)
-(setq-default desktop-restore-eager 10 ; max number of desktop to restore at startup
-              desktop-load-locked-desktop t ; load desktops without asking, even in error cases, woohoo
-              desktop-save t ; always save
-              desktop-dirname "/home/cht/.emacs-desktop/"
-              desktop-base-file-name "desktop-"
-)
-(add-to-list 'desktop-path "/home/cht/.emacs-desktop/")
-
 (require 'ansi-color)
 (defun display-ansi-colors ()
   (interactive)
@@ -131,22 +122,6 @@ use v5.28;\n\n"
   "Convert ANSI terminal codes into colors across the whole buffer."
   (interactive)
   (ansi-color-apply-on-region (point-min) (point-max)))
-
-(use-package helm
-  :diminish helm-mode
-  :ensure t
-  :init
-  (require 'helm-config)
-  (helm-mode 1)
-  :bind (("C-c h" . helm-mini)
-	 ("C-h a" . helm-apropos)
-	 ("C-x C-b" . helm-buffers-list)
-	 ("C-x b" . helm-buffers-list)
-	 ("M-y" . helm-show-kill-ring)
-	 ("C-x c o" . helm-occur)
-	 ("M-x" . helm-M-x)
-         ("<f9>" . test-helm)
-	 ("C-x C-f" . helm-find-files)))
 
 (use-package magit
   :ensure t
@@ -220,10 +195,7 @@ Argument MAP is c-mode-map or c++-mode-map."
   ;; macros, templates, skeletons:
   (define-key map (kbd "C-c m p") #'cht/skel-fflush-msg)
   )
-(require 'eglot)
-(add-to-list 'eglot-server-programs '((c++-mode c-mode) "clangd"))
-(add-hook 'c-mode-hook 'eglot-ensure)
-(add-hook 'c++-mode-hook 'eglot-ensure)
+
 (add-hook 'c++-mode-hook
           (lambda ()
             ;; my keybindings
@@ -234,12 +206,6 @@ Argument MAP is c-mode-map or c++-mode-map."
             ;; my keybindings
             (cht/c-common-mode-keys c-mode-map)
             ))
-
-(use-package helm-descbinds
-  :defer t
-  :ensure t
-  :bind (("C-h b" . helm-descbinds)
-	 ("C-h w" . helm-descbinds)))
 
 (use-package s
   :ensure t
