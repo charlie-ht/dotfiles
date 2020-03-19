@@ -23,7 +23,7 @@
 	cl = git clean -fd
 [user]
 	name = Charlie Turner
-	email = mail@charles.plus
+	email = cturner@igalia.com
 [core]
 	editor = vim
 # https://stackoverflow.com/questions/34119866/setting-up-and-using-meld-as-your-git-difftool-and-mergetool

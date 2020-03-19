@@ -18,9 +18,9 @@ else
     NUM_CORES=4
 fi
 
-JHBUILDRC=$HOME/webkit/webkit-misc/jhbuildrc
-JHBUILD_MODULES=$HOME/webkit/webkit-misc/jhbuild.modules
-src_dir=$HOME/webkit/WebKit
+JHBUILDRC=$HOME/igalia/sources/webkit-misc/jhbuildrc
+JHBUILD_MODULES=$HOME/igalia/sources/webkit-misc/jhbuild.modules
+src_dir=$HOME/igalia/sources/WebKit
 
 check_branch() {
     if test -z "$branch"; then
@@ -30,6 +30,24 @@ check_branch() {
 
 normalize_branch() {
     branch=$(echo $branch | sed -e 's/[^A-Za-z0-9._-]/_/g')
+}
+
+pathmunge ()
+{
+    if ! echo "$PATH" | /bin/grep -Eq "(^|:)$1($|:)" ; then
+        if [ "$2" = "after" ] ; then
+            PATH="$PATH:$1"
+        else
+            PATH="$1:$PATH"
+        fi
+    fi
+}
+path_prepend_if_missing ()
+{
+    local pathname="$1"
+    if [ -d $pathname ]; then
+        pathmunge $pathname
+    fi
 }
 
 WEBKIT_EVENTS=Events,PlatformLeaks

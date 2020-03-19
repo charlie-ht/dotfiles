@@ -4,7 +4,7 @@ D=$(dirname $(readlink -f $0))
 source $D/common.sh
 source $D/webkit-common.sh
 
-src_dir=$HOME/webkit/WebKit
+src_dir=$HOME/igalia/sources/WebKit
 gst_debug='*:2,webkit*:6'
 
 usage() {
@@ -88,9 +88,10 @@ if test -z "$branch"; then
     branch=$(echo $branch | sed -e 's/[^A-Za-z0-9._-]/_/g')
 fi
 
-build_dir=$HOME/webkit/build-$port-$branch-$build_type
+#FIXME: Hardcoding WebKit for the srcdir is confusing, but I don't run tests for non-master repos currently.
+build_dir=$HOME/igalia/webkit-build-WebKit-$port-$branch-$build_type
 if ! test -d "$build_dir"; then
-    echo_error "no build product for $port-$branch-$build_type"
+    echo_error "no build product for $build_dir"
     usage
     exit 1
 fi

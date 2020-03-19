@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+# -*- mode: python -*-
+
+"""
+This is a module docstring
+"""
+
+import sys
+import os
+import subprocess
+import locale
+import re
+
+
+BR_TOP_LEVEL_DIR = os.path.expanduser("~/igalia/buildroot")
+BR_OUTPUT_DIR = os.path.join(BR_TOP_LEVEL_DIR, "output")
+
+
+def run_process_and_return_output(args):
+    completed_process = subprocess.run(args,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT,
+                                       check=True,
+                                       encoding=locale.getpreferredencoding())
+    return completed_process.stdout
+
+
+def get_executable_name_from_core_file(core_file_path):
+    output = run_process_and_return_output(["file", core_file_path])
+
+    match = re.findall(r"execfn: '([^']+)'", output)
+    if not match:
+        print("core file not in a recognised format,"
+              " failed to find executable name")
+        bye()
+    executable_name = os.path.basename(match[0])
+    return executable_name
+
+
+def examine_core_file(args):
+    if len(args) == 0:
+        core_file_path = "core"
+    else:
+        core_file_path = args[0]
+
+    print(f"examining `{core_file_path}`...")
+    br_gdb_path = os.path.join(BR_OUTPUT_DIR,
+                               "host/bin/arm-buildroot-linux-gnueabihf-gdb")
+    br_gdb_init_file = os.path.join(BR_OUTPUT_DIR,
+                                    "staging/usr/share/buildroot/gdbinit")
+
+    executable_name = get_executable_name_from_core_file(core_file_path)
+    print(executable_name)
+    if executable_name == "WPEWebProcess":
+        executable_path = \
+            os.path.join(BR_OUTPUT_DIR,
+                         "build/wpewebkit-custom/bin/WPEWebProcess")
+    else:
+        executable_path = ""
+        print(f"{executable_name} is not in my wheelhouse")
+        bye()
+
+    subprocess.run([br_gdb_path, "-x", br_gdb_init_file,
+                    executable_path, core_file_path], check=True)
+
+
+def bye(code=1):
+    print("bye!")
+    sys.exit(code)
+
+
+def usage():
+    print("\nBuildroot helper script")
+    print("=======================")
+    print("available subcommands:")
+    print("\texamine-core [core-file]")
+    print("\t\tloads up the core file, taking care to call GDB fruitful "
+          "incantations")
+    print("\t\tcore-file defaults to `core`")
+
+
+def run():
+    if len(sys.argv) == 1:
+        usage()
+        bye()
+
+    sub_command = sys.argv[1]
+    if sub_command == "examine-core":
+        examine_core_file(sys.argv[2:])
+    else:
+        print(f"unknown command: {sys.argv[1]}")
+
+
+if __name__ == '__main__':
+    run()

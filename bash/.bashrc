@@ -92,7 +92,18 @@ alias c_sprunge="curl -F 'sprunge=<-' http://sprunge.us"
 alias c_find_c_or_cpp_files='find . -name "*.cpp" -o -name "*.c" -o -name "*.h" -o -name "*.hpp" -o -name "*.cc" -o -name "*.cxx" -o -name "*.hxx"'
 alias pypath="echo $PYTHONPATH | tr ':' '\n'"
 
-export EDITOR='emacsclient'
+rg_cpp()
+{
+        rg -g "*.c" -g "*.cpp" -g "*.h" $@
+}
+rg_cmake()
+{
+        rg -g "*.cmake" -g "CMakeLists.txt" $@
+}
+
+alias vim=nvim
+alias vi=nvim
+export EDITOR=nvim
 export PAGER=less
 
 ######################
@@ -117,14 +128,14 @@ path_prepend_if_missing ()
     fi
 }
 
+export VIMCONFIG=$HOME/.config/nvim
 path_prepend_if_missing $HOME/bin
 path_prepend_if_missing $HOME/.local/bin
 # Rust toolchain
 path_prepend_if_missing $HOME/.cargo/bin
 # Programs I have compiled myself.
 path_prepend_if_missing $HOME/build/bin
-# Icecc
-path_prepend_if_missing /usr/lib/icecc/bin
+path_prepend_if_missing $VIMCONFIG/pack/bundle/start/fzf/bin
 
 #####################
 # General Functions #
@@ -285,7 +296,7 @@ c_gst_plugins() {
 
 alias c_wk_test_results='x-www-browser file://$HOME/webkit-test/results.html'
 
-export WK_SOURCE_DIR=$HOME/webkit/WebKit
+export WK_SOURCE_DIR=$HOME/igalia/sources/WebKit
 
 c_wk_enter() {
     gst_env=$($HOME/gstreamer/gst-build/gst-env.py --only-environment)
@@ -296,7 +307,7 @@ c_wk_enter() {
 $gst_env
 
 export PS1="[webkit] $PS1"
-export WEBKIT_SRC=$HOME/webkit/WebKit
+export WEBKIT_SRC=$WK_SOURCE_DIR
 export PATH=\$PATH:\$WEBKIT_SRC/Tools/Scripts
 
 cd \$WEBKIT_SRC
@@ -312,9 +323,7 @@ c_wk_grep_expectations () {
     find $WK_SOURCE_DIR/LayoutTests -name "TestExpectations" | xargs grep -rn $@
 }
 
-#################
-# Git Functions #
-#################
+# Git
 
 # When you've forgotten everything again, git help -ag is useful to
 # see all the stuff you need to read again...
@@ -329,9 +338,7 @@ c_git_ignore_untracked_files () {
     git status --porcelain | grep '^??' | cut -c4- >> .gitignore
 }
 
-###################
-# EMail Functions #
-###################
+# Email 
 
 c_igalia_db () {
     command=$1

@@ -35,7 +35,7 @@ There are two things you can do about this warning:
 
 (add-to-list 'default-frame-alist '(width  . 136))
 (add-to-list 'default-frame-alist '(height . 44))
-(add-to-list 'default-frame-alist '(font . "Hack-13"))
+(add-to-list 'default-frame-alist '(font . "Input Mono-14")) ;; Hack-13
 
 (load-theme 'tsdh-dark t)
 
@@ -138,14 +138,31 @@ use v5.28;\n\n"
 ;;     (local-set-key (kbd "<f11>") 'hs-show-block))
 ;;   (add-hook 'cc-mode-hook 'cht-c-mode-hook)
 
-;;   (defconst my-cc-style
-;;   '("k&r"
-;;     (c-offsets-alist . ((innamespace . [0])))))
-;;   (setq c-default-style '((java-mode . "java")
-;;                           (awk-mode . "awk")
-;;                           (c++-mode . "my-cc-style")
-;;                           (c-mode . "my-cc-style")
-;;                           (other . "k&r")))
+(defconst my-cc-style
+  '("k&r"
+    (c-offsets-alist . ((innamespace . [0])))))
+(setq c-default-style '((java-mode . "java")
+                        (awk-mode . "awk")
+                        (c++-mode . "my-cc-style")
+                        (c-mode . "my-cc-style")
+                        (other . "k&r")))
+
+(use-package lsp-mode :commands lsp)
+(use-package lsp-ui :commands lsp-ui-mode)
+(use-package company-lsp :commands company-lsp)
+;; I work on projects with too many files.
+(setq lsp-enable-file-watchers nil)
+
+(use-package ccls
+  :hook ((c-mode c++-mode objc-mode cuda-mode) .
+         (lambda () (require 'ccls) (lsp))))
+
+(setq ccls-executable "~/src/ccls/Release/ccls")
+
+(global-flycheck-mode 1)
+(with-eval-after-load 'flycheck
+  (add-hook 'flycheck-mode-hook #'flycheck-pycheckers-setup))
+
 ;;   (defvar compile-guess-command-table
 ;;     '((c-mode . "cc -Wall -Wextra -g %s -o %s -lm")
 ;;       (c++-mode . "c++ -Wall -Wextra -std=c++17 -g %s -o %s -lm")))
@@ -257,8 +274,8 @@ Argument MAP is c-mode-map or c++-mode-map."
 (setq cht-paths-to-top-level-search-directories-assoc
       (list
        (cons ".*/gst-build/.*" "/home/cht/gstreamer/gst-build/subprojects/")
-       (cons ".*/WebKit/Tools/.*" "/home/cht/webkit/WebKit/Tools/")
-       (cons ".*/WebKit/Source/.*" "/home/cht/webkit/WebKit/Source/")))
+       (cons ".*/WebKit/Tools/.*" "/home/cht/igalia/sources/WebKit/Tools/")
+       (cons ".*/WebKit/Source/.*" "/home/cht/igalia/sources/WebKit/Source/")))
 
 (defun cht-project-find-top-level-dir-for-path (current-dir database)
   (cond ((null database) nil)
@@ -350,7 +367,7 @@ function names for a number of frames."
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
+    (flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

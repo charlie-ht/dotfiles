@@ -69,8 +69,9 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 + .vimrc
 + .wget-hsts
 + .xchm
-# Make sure this stays as the last thing after the explicit includes.
 - .local/share/Trash
+- .config/google-chrome/
+# Make sure this stays as the last thing after the explicit includes.
 - /.*
 
 # Selectively exclude files
@@ -87,7 +88,11 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 - /igalia/metrological/yocto/**/*build*/tmp-glibc
 - /igalia/metrological/yocto/**/*build*/sstate*
 - /igalia/wpe/**/build/
-- /igalia/wpe/buildroot/dl/
-- /igalia/wpe/buildroot/output/
+- /igalia/buildroot/dl/
+- /igalia/buildroot/output/
+- /igalia/webkit-build-*/
+- /igalia/jhbuild-deps-prefix/
 - /gstreamer/gst-build/build/
+- /arm-buildroot-linux-gnueabihf_sdk-buildroot/
+
 EOF

@@ -10,6 +10,7 @@ source $D/common.sh
 source $D/webkit-common.sh
 
 extra_cmake_args=''
+num_cores=$NUM_CORES
 
 while test -n "$1"; do
     case "$1" in
@@ -94,8 +95,7 @@ check_branch
 normalize_branch
 
 echo_heading "Building $port:$branch in configuration $build_type"
-
-build_dir=$HOME/webkit/build-$port-$branch-$build_type
+build_dir=$HOME/igalia/webkit-build-$(basename $src_dir)-$port-$branch-$build_type
 if ! test -d "$build_dir"; then
     mkdir $build_dir
 fi
@@ -116,7 +116,6 @@ fi
 
 OUR_JHBUILD_PREFIX=$(jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env | grep JHBUILD_PREFIX= | cut -f2 -d=)
 
-export CXXFLAGS='-DLOG_DISABLED=0'
 if test -z "$incremental_build"; then
     echo_heading "Reconfiguring build-directory"
     jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run \
@@ -131,19 +130,17 @@ if test -z "$incremental_build"; then
 	  -DDEVELOPER_MODE=ON \
 	  -DENABLE_MINIBROWSER=ON \
 	  -DENABLE_BUBBLEWRAP_SANDBOX=OFF \
-          -DENABLE_MEDIA_SOURCE=ON \
-          -DENABLE_ENCRYPTED_MEDIA=ON \
-          -DLOG_DISABLED=0 \
-          -DRELEASE_LOG_DISABLED=0 \
+      -DENABLE_MEDIA_SOURCE=ON \
+      -DENABLE_ENCRYPTED_MEDIA=ON \
 	  $extra_cmake_args
     echo_heading "Running Ninja"
-    time jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run ninja -j$NUM_CORES
+    time jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run ninja -j$num_cores
 else
     echo_warning "WARNING!! Incremental rebuild ($build_dir)"
 
     time jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run \
 	 cmake --build $build_dir \
-         --config $build_type -- -j$NUM_CORES bin/MiniBrowser
+         --config $build_type -- -j$num_cores bin/MiniBrowser
 fi
 
 popd 2>&1>/dev/null

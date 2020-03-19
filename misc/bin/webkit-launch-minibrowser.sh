@@ -63,9 +63,9 @@ check_branch
 normalize_branch
 
 echo_heading "Running minibrowser for $port:$branch in configuration $build_type"
-build_dir=$HOME/webkit/build-$port-$branch-$build_type
+build_dir=$HOME/igalia/webkit-build-WebKit-$port-$branch-$build_type
 if ! test -d "$build_dir"; then
-    echo_error "no build product for $port-$branch-$build_type"
+    echo_error "no build product for $build_dir"
     exit 1
 fi
 cmd_prefix="jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run"
