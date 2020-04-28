@@ -6,6 +6,7 @@ source $D/webkit-common.sh
 
 src_dir=$HOME/igalia/sources/WebKit
 gst_debug='*:2,webkit*:6'
+logging=
 
 usage() {
     echo_heading "Usage:"
@@ -19,11 +20,18 @@ usage() {
     echo "      --debug - will pause the WebProcess on startup to allow GDB attachment"
     echo "      ... - remaining args are paths under LayoutTests. My default is http/tests/media fast/media fast/mediastream media imported/w3c/web-platform-tests/media imported/web-platform-tests/encrypted-media imported/w3c/web-platform-tests/media-source webaudio"
     echo "      --eme    - run a set of tests for EME"
+    echo "      --logging - run tests with logging output, not this may break the tests with meaningless text diffs (logging to stderr)"
     echo
 }
 
 while test -n "$1"; do
     case "$1" in
+        --logging)
+            logging=1
+            ;;
+        --media)
+            tests='http/tests/media fast/media fast/mediastream media imported/w3c/web-platform-tests/media imported/w3c/web-platform-tests/encrypted-media imported/w3c/web-platform-tests/media-source webaudio'
+            ;;
         --eme)
             tests='media/encrypted-media imported/w3c/web-platform-tests/encrypted-media/clearkey* http/tests/media/clearkey'
             ;;
@@ -70,14 +78,14 @@ while test -n "$1"; do
 done
 
 if test -z "$build_type"; then
-    echo_error "no build type given, aborting"
-    usage
-    exit 1
+    echo_warning "no build type given, default to debug"
+    build_type="Debug"
 fi
 if test -z "$port"; then
     echo_warning "no port given, default to gtk"
     port=gtk
 fi
+
 if test -z "$src_dir"; then
     echo_error "no source directory given, aborting"
     usage
@@ -105,33 +113,36 @@ if ! test -d "$build_dir/webkitgtk-test-fonts"; then
     fi
 fi
 
+echo_heading "Testing product in $build_dir"
+
 export PYTHONPATH=$PYTHONPATH:$src_dir/Tools/Scripts
 export WEBKIT_OUTPUTDIR=$build_dir
 
 if test -n "$debugging"; then
     echo_heading "In debug mode, attach a debugger! ($debugging)"
-    debug_args="--additional-env-var=WEBKIT2_PAUSE_WEB_PROCESS_ON_LAUNCH=1 --no-timeout"
+    test_flags="--additional-env-var=WEBKIT2_PAUSE_WEB_PROCESS_ON_LAUNCH=1 --no-timeout"
 fi
 
-if test -n "$gst_debug"; then
-    echo_heading "Dumping GStreamer dot files to /tmp"
-    dump_dots_args="--additional-env-var=GST_DEBUG_DUMP_DOT_DIR=$HOME/gstreamer-dumps/"
-fi
+rm -f ~/cores/*
 
-export WEBKIT_CORE_DUMPS_DIRECTORY=$HOME/cores
+# These are the debugging output flags
+# I can't figure out how to conditionally expand them
+# into the mega-command line below. If you unconditionally
+# include them, layout tests will fail due to the text output to stderr by these options
+# --additional-env-var="WEBKIT_DEBUG=Media,EME,Events,ProcessSuspension" \
+# --additional-env-var="GST_DEBUG=$gst_debug" \
+# --additional-env-var="GST_DEBUG_NO_COLOR=1" \
+# --additional-env-var="GST_DEBUG_DUMP_DOT_DIR=$HOME/gstreamer-dumps/" \
+
 time jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run \
+        env WEBKIT_CORE_DUMPS_DIRECTORY=$HOME/cores \
 	$src_dir/Tools/Scripts/run-webkit-tests \
-	--additional-env-var="GST_PLUGIN_SYSTEM_PATH=$GST_PLUGIN_SYSTEM_PATH" \
-	--additional-env-var="GST_PLUGIN_PATH=$GST_PLUGIN_PATH" \
-	--additional-env-var="GST_REGISTRY=$GST_REGISTRY" \
-	--additional-env-var="GST_PLUGIN_SCANNER=$GST_PLUGIN_SCANNER" \
-	--additional-env-var="GST_PRESET_PATH=$GST_PRESET_PATH" \
-	--additional-env-var='WEBKIT_DEBUG=Media,EME,Events,ProcessSuspension' \
-	--additional-env-var="GST_DEBUG=$gst_debug" \
-	--additional-env-var="GST_DEBUG_NO_COLOR=1" \
-	--additional-env-var="DISABLE_NI_WARNING=1" \
-	$dump_dots_args \
-	$debug_args \
+        --additional-env-var="GST_PLUGIN_SYSTEM_PATH=$GST_PLUGIN_SYSTEM_PATH" \
+        --additional-env-var="GST_PLUGIN_PATH=$GST_PLUGIN_PATH" \
+        --additional-env-var="GST_REGISTRY=$GST_REGISTRY" \
+        --additional-env-var="GST_PLUGIN_SCANNER=$GST_PLUGIN_SCANNER" \
+        --additional-env-var="GST_PRESET_PATH=$GST_PRESET_PATH" \
+        --additional-env-var="DISABLE_NI_WARNING=1" \
 	--debug-rwt-logging \
 	--platform=$port \
 	--results-directory=$HOME/webkit-test \

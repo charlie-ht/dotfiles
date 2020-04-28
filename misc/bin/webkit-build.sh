@@ -11,21 +11,23 @@ source $D/webkit-common.sh
 
 extra_cmake_args=''
 num_cores=$NUM_CORES
+incremental_build=1
+
+CC=/usr/lib/icecc/bin/clang
+CXX=/usr/lib/icecc/bin/clang++
+ICECC_VERSION=$HOME/devenv/clang-head.tar.gz
 
 while test -n "$1"; do
     case "$1" in
-        --clang)
-            CXX=/usr/lib/icecc/bin/clang++
-            CC=/usr/lib/icecc/bin/clang
+        --gcc)
+            CXX=/usr/bin/g++
+            CC=/usr/bin/gcc
             ;;
         --src-dir=*)
             src_dir="${1#--src-dir=}"
             ;;
-        --force-rebuild)
-            force_rebuild="yes"
-            ;;
-        --incr*)
-            incremental_build="yes"
+        --rebuild)
+            incremental_build=
             ;;
         --build-deps)
             build_deps="yes"
@@ -33,21 +35,11 @@ while test -n "$1"; do
         --num-cores=*)
             num_cores="${1#--num-cores=}"
             ;;
-        --build-type=*)
-            build_type="${1#--build-type=}"
-            if ! test "$build_type" = "debug" -o "$build_type" = "release"; then
-                echo_error "build type should be debug or release"
-                exit 1
-            fi
-            # map the build type information into CMake-speak
-            case "$build_type" in
-                *release*)
-                    build_type="RelWithDebInfo"
-                    ;;
-                *debug*)
-                    build_type="Debug"
-                    ;;
-            esac
+        --release)
+            build_type="RelWithDebInfo"
+            ;;
+        --debug)
+            build_type="Debug"
             ;;
         --port=*)
             port="${1#--port=}"
@@ -71,8 +63,8 @@ while test -n "$1"; do
 done
 
 if test -z "$build_type"; then
-    echo_error "no build type given, aborting"
-    exit 1
+    echo_warning "no build type given, default to debug"
+    build_type="Debug"
 fi
 if test -z "$port"; then
     echo_warning "no port given, default to gtk"
@@ -105,6 +97,7 @@ install_prefix=$HOME/build/webkit/install-$port-$branch-$build_type
 echo_heading "=== Configuring WebKit"
 pushd $build_dir 2>&1>/dev/null
 
+# FIXME: not used anymore, but confirm logic is handy to keep
 if test -n "$force_rebuild"; then
     read -p "Removing everything in $install_prefix and $build_dir; ok?" -n 1 -r
     echo    # (optional) move to a new line

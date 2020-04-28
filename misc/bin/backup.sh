@@ -69,7 +69,7 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 + .vimrc
 + .wget-hsts
 + .xchm
-- .local/share/Trash
+- .local/share/
 - .config/google-chrome/
 # Make sure this stays as the last thing after the explicit includes.
 - /.*
@@ -77,6 +77,7 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 # Selectively exclude files
 - /Downloads
 - /scratch
+- .ccls-cache/
 - *.pyc
 - *~
 - *.swp
@@ -87,12 +88,16 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 - /igalia/metrological/yocto/**/*build*/cache
 - /igalia/metrological/yocto/**/*build*/tmp-glibc
 - /igalia/metrological/yocto/**/*build*/sstate*
-- /igalia/wpe/**/build/
-- /igalia/buildroot/dl/
-- /igalia/buildroot/output/
+- /**/buildroot*/dl/
+- /**/buildroot*/output/
 - /igalia/webkit-build-*/
+- /webkit-test/
+- /cores/
+# Recreatable
+- /devenv/
 - /igalia/jhbuild-deps-prefix/
 - /gstreamer/gst-build/build/
 - /arm-buildroot-linux-gnueabihf_sdk-buildroot/
+- /local
 
 EOF

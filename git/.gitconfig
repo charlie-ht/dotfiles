@@ -1,6 +1,8 @@
 [alias]
 	co = checkout
 	br = branch
+        ri = rebase -i
+        rc = rebase --continue
 	brs = branch -r --sort=-committerdate
 	ci = commit
 	ff = pull --ff-only
@@ -20,12 +22,11 @@
 	up = "!git remote update -p; git merge --ff-only @{u}"
         logupdated = log --oneline --name-status ORIG_HEAD..
 	branchnews = branch --sort=-committerdate -r
-	cl = git clean -fd
+	cl = clean -fd
 [user]
 	name = Charlie Turner
 	email = cturner@igalia.com
 [core]
-	editor = vim
 # https://stackoverflow.com/questions/34119866/setting-up-and-using-meld-as-your-git-difftool-and-mergetool
 [diff]
         tool = meld
@@ -49,3 +50,5 @@
 	smtpServer = mail.igalia.com
 	smtpUser = cturner
 	smtpServerPort = 587
+[http]
+	postBuffer = 1048576000
