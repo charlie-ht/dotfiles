@@ -1,3 +1,6 @@
+;; If I do not set the gnutls-algorithm-priority, I get this error on Debian Buster,
+;; Debugger entered -- Lisp error: (file-error "https://elpa.gnu.org/packages/archive-contents" "Bad Request")
+(require 'gnutls)
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 
 (require 'package)
@@ -19,28 +22,21 @@ There are two things you can do about this warning:
     (add-to-list 'package-archives (cons "gnu" (concat proto "://elpa.gnu.org/packages/")))))
 (package-initialize)
 
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
-
 (eval-when-compile
   (require 'use-package))
 
 (server-start)
-
+(add-to-list 'default-frame-alist '(width  . 136))
+(add-to-list 'default-frame-alist '(height . 44))
+(add-to-list 'default-frame-alist '(font . "Input Mono-14")) ;; Hack-13
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 (show-paren-mode 1)
 
-(add-to-list 'default-frame-alist '(width  . 136))
-(add-to-list 'default-frame-alist '(height . 44))
-(add-to-list 'default-frame-alist '(font . "Input Mono-14")) ;; Hack-13
-
 (load-theme 'tsdh-dark t)
 
 (global-set-key (kbd "C-;") 'completion-at-point)
-
 (global-auto-revert-mode t)
 
 (setq-default backup-directory-alist `(("." . "~/.emacs.d/saves"))
@@ -53,16 +49,8 @@ There are two things you can do about this warning:
       indent-tabs-mode nil
       debug-on-error t)
 
-(require 'ansi-color)
-(defun display-ansi-colors ()
-  (interactive)
-  (ansi-color-apply-on-region (point-min) (point-max)))
-(defun display-ansi-colors-on-region ()
-  (interactive)
-  (ansi-color-apply-on-region (region-beginning) (region-end)))
-
-
-;; do not get asked whether to perform auto insertions on new files
+;; FIXME: The skeleton language and regex literals are too confusing.
+;;        I forget each time I look at this how it worked.
 (setq-default auto-insert-query nil)
 (setq-default auto-insert-alist
   '((("\\.\\([Hh]\\|hh\\|hpp\\|hxx\\|h\\+\\+\\)\\'" . "C / C++ header")
@@ -123,6 +111,9 @@ use v5.28;\n\n"
   (interactive)
   (ansi-color-apply-on-region (point-min) (point-max)))
 
+(setq org-todo-keywords
+      '((sequence "TODO" "DOING" "STALLED" "|" "REVIEW" "DONE")))
+
 (use-package magit
   :ensure t
   :bind (("C-x g" . magit-status)))
@@ -156,33 +147,38 @@ use v5.28;\n\n"
 (use-package ccls
   :hook ((c-mode c++-mode objc-mode cuda-mode) .
          (lambda () (require 'ccls) (lsp))))
-
 (setq ccls-executable "~/src/ccls/Release/ccls")
 
 (global-flycheck-mode 1)
 (with-eval-after-load 'flycheck
-  (add-hook 'flycheck-mode-hook #'flycheck-pycheckers-setup))
+  (add-hook 'flycheck-mode-hook #'flycheck-pycheckers-setup)
+  (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc)))
 
-;;   (defvar compile-guess-command-table
-;;     '((c-mode . "cc -Wall -Wextra -g %s -o %s -lm")
-;;       (c++-mode . "c++ -Wall -Wextra -std=c++17 -g %s -o %s -lm")))
-;;   (defun compile-guess-command ()
-;;     (let ((command-for-mode (cdr (assq major-mode compile-guess-command-table))))
-;;       (when (and command-for-mode (stringp buffer-file-name))
-;;         (let* ((file-name (file-name-nondirectory buffer-file-name))
-;;                (file-name-sans-prefix (when (and (string-match "\\.[^.]*\\'" file-name)
-;;                                                  (> (match-beginning 0) 0))
-;;                                         (substring file-name 0 (match-beginning 0)))))
-;;           (when file-name-sans-suffix
-;;             (progn
-;;               (make-local-variable 'compile-command)
-;;               (setq compile-commond
-;;                     (if (stringp command-for-mode)
-;;                         (format command-for-mode
-;;                                 file-name filename-sans-suffix)
-;;                       (funcall command-for-mode
-;;                                file-name file-name-sans-suffix)))
-;;               compile-command)))))))
+
+(defun my-compile ()
+  (interactive)
+  (defvar compile-guess-command-table
+    '((c-mode . "cc -Wall -Wextra -g %s -o %s -lm")
+      (c++-mode . "c++ -Wall -Wextra -std=c++2a -g %s -o %s -lm")))
+  (let ((command-for-mode
+         (cdr (assq major-mode compile-guess-command-table))))
+    (when (and command-for-mode (stringp buffer-file-name))
+      (let* ((file-name (file-name-nondirectory buffer-file-name))
+             (file-name-sans-prefix (when (and (string-match "\\.[^.]*\\'" file-name)
+                                               (> (match-beginning 0) 0))
+                                      (substring file-name 0 (match-beginning 0)))))
+        (when file-name-sans-prefix
+          (progn
+            (let ((compile-command
+                   (if (stringp command-for-mode)
+                       (format command-for-mode
+                               file-name file-name-sans-prefix)
+                     (funcall command-for-mode
+                              file-name file-name-sans-prefix)))
+                  (compilation-ask-about-save nil))
+              (message (format "CHT.....%S" compile-command))
+              (compile compile-command))))))))
+(global-set-key (kbd "<f5>") 'my-compile)
           
 ;;;###autoload
 (define-skeleton cht-perl-template
@@ -236,6 +232,35 @@ Argument MAP is c-mode-map or c++-mode-map."
 	try-complete-lisp-symbol-partially try-complete-lisp-symbol))
 (define-key minibuffer-local-map (kbd "C-<tab>") 'hippie-expand)
 
+(use-package helm
+  :diminish helm-mode
+  :init
+  (progn
+    (require 'helm-config)
+    (setq helm-candidate-number-limit 100)
+    ;; From https://gist.github.com/antifuchs/9238468
+    (setq helm-idle-delay 0.0 ; update fast sources immediately (doesn't).
+          helm-input-idle-delay 0.01  ; this actually updates things
+                                        ; reeeelatively quickly.
+          helm-yas-display-key-on-candidate t
+          helm-quick-update t
+          helm-M-x-requires-pattern nil
+          helm-ff-skip-boring-files t)
+    (helm-mode))
+  :bind (("C-c h" . helm-mini)
+         ("C-h a" . helm-apropos)
+         ("C-x C-b" . helm-buffers-list)
+         ("C-x C-f" . helm-find-files)
+         ("C-x b" . helm-buffers-list)
+         ("M-y" . helm-show-kill-ring)
+         ("M-x" . helm-M-x)
+         ("C-x c o" . helm-occur)
+         ("C-x c s" . helm-swoop)
+         ("C-x c y" . helm-yas-complete)
+         ("C-x c Y" . helm-yas-create-snippet-on-region)
+         ("C-x c b" . my/helm-do-grep-book-notes)
+         ("C-x c SPC" . helm-all-mark-rings)))
+
 (use-package rust-mode
   :ensure t
   :defer t
@@ -249,6 +274,7 @@ Argument MAP is c-mode-map or c++-mode-map."
     :config
     (add-hook 'racer-mode-hook #'eldoc-mode)
     (add-hook 'racer-mode-hook #'company-mode)
+    (setq-default racer-rust-src-path (expand-file-name "~/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/src/"))
   (use-package cargo
     :ensure t
     :config
@@ -259,11 +285,12 @@ Argument MAP is c-mode-map or c++-mode-map."
     :config
     (add-hook #'flycheck-mode-hook #'flycheck-rust-setup))
   (defun my-rust-mode-hook ()
-    (set (make-local-variable 'compile-command) "cargo run"))
+    (set (make-local-variable 'compile-command) "cargo run")
+    (local-set-key (kdb "C-c <tab>") #'rust-format-buffer))
   (add-hook 'rust-mode-hook 'my-rust-mode-hook)
   (add-hook 'rust-mode-hook #'racer-mode)
   (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
-  (setq rust-format-on-save t)))
+ (setq rust-format-on-save t)))
 
 (defun elisp-insert-evaluation ()
   (interactive)
@@ -291,7 +318,18 @@ Argument MAP is c-mode-map or c++-mode-map."
     (if top-level-search-path
         (helm-grep-git-1 top-level-search-path)
       (error "No search path matches the cwd"))))
-(global-set-key (kbd "<f9>") 'cht-project-search)
+(defun wk-search ()
+  (interactive)
+  (require 'fzf)
+  (fzf/start (expand-file-name "~/igalia/sources/WebKit/Source")
+             (fzf/grep-cmd "git grep" fzf/git-grep-args)))
+(global-set-key (kbd "<f9>") 'wk-search)
+
+(defun wk-find-file ()
+  (interactive)
+  (require 'fzf)
+  (fzf/start (expand-file-name "~/igalia/sources/WebKit/")))
+(global-set-key (kbd "<f1>") 'wk-find-file)
 
 (defun cht/revert-all-no-confirm ()
   "Revert all file buffers, without confirmation.
@@ -367,7 +405,7 @@ function names for a number of frames."
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
+    (meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
