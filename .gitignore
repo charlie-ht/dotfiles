@@ -4,3 +4,6 @@
 emacs/.emacs.d/.#recentf
 emacs/.emacs.d/session.*
 /emacs/.emacs.d/elpa
+# Used for compile-server support editing any C files in misc/bin
+# Not heavily used so far
+.ccls
