@@ -1,0 +1,8 @@
+#!/bin/bash
+# -*- mode: shell-script -*-
+
+D=$(dirname $(readlink -f $0))
+source $D/common.sh
+source $D/webkit-common.sh
+
+# TODO: unify
