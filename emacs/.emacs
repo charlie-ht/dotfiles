@@ -28,7 +28,7 @@ There are two things you can do about this warning:
 (server-start)
 (add-to-list 'default-frame-alist '(width  . 136))
 (add-to-list 'default-frame-alist '(height . 44))
-(add-to-list 'default-frame-alist '(font . "Input Mono-14")) ;; Hack-13
+(add-to-list 'default-frame-alist '(font . "Input Mono-12"))
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
 (menu-bar-mode -1)
@@ -48,6 +48,17 @@ There are two things you can do about this warning:
       vc-follow-symlinks t
       indent-tabs-mode nil
       debug-on-error t)
+
+(global-set-key (kbd "C-<tab>") 'hippie-expand)
+(setq hippie-expand-try-functions-list
+      '(try-expand-all-abbrevs try-expand-dabbrev
+	try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill
+	try-complete-lisp-symbol-partially try-complete-lisp-symbol))
+(define-key minibuffer-local-map (kbd "C-<tab>") 'hippie-expand)
+
+(defun insert-date ()
+  (interactive)
+  (insert (shell-command-to-string "echo -n $(date +'%a %d/%m/%Y')")))
 
 ;; FIXME: The skeleton language and regex literals are too confusing.
 ;;        I forget each time I look at this how it worked.
@@ -92,6 +103,9 @@ use v5.28;\n\n"
   )
 
     ))
+
+
+;; Mode customization
 (add-hook 'find-file-hook 'auto-insert)
 
 (defun cht-text-mode-hook ()
@@ -154,7 +168,7 @@ use v5.28;\n\n"
   (add-hook 'flycheck-mode-hook #'flycheck-pycheckers-setup)
   (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc)))
 
-
+;; FIXME: Add to C mode scope somehow
 (defun my-compile ()
   (interactive)
   (defvar compile-guess-command-table
@@ -192,12 +206,11 @@ use v5.28;\n\n"
        (message "Copyright extends beyond `copyright-limit' and won't be updated automatically."))
   comment-end \n)
 
-
 (define-skeleton cht/skel-fflush-msg
   "Insert a copyright by $ORGANIZATION notice at cursor."
   nil
-  > "fprintf(stderr, \"CHT: " _ "\\n\"); fflush(stderr);"
-)
+  > "fprintf(stderr, \"CHT: " _ "\\n\"); fflush(stderr);")
+
 (defun cht/c-common-mode-keys (map)
   "Set my personal keys for C and C++. 
 Argument MAP is c-mode-map or c++-mode-map."
@@ -206,8 +219,7 @@ Argument MAP is c-mode-map or c++-mode-map."
 
   ;(define-key map '[(control b) (control b)]  #'compile)
   ;; macros, templates, skeletons:
-  (define-key map (kbd "C-c m p") #'cht/skel-fflush-msg)
-  )
+  (define-key map (kbd "C-c m p") #'cht/skel-fflush-msg))
 
 (add-hook 'c++-mode-hook
           (lambda ()
@@ -224,13 +236,6 @@ Argument MAP is c-mode-map or c++-mode-map."
   :ensure t
   :defer t)
 (require 's)
-
-(global-set-key (kbd "C-<tab>") 'hippie-expand)
-(setq hippie-expand-try-functions-list
-      '(try-expand-all-abbrevs try-expand-dabbrev
-	try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill
-	try-complete-lisp-symbol-partially try-complete-lisp-symbol))
-(define-key minibuffer-local-map (kbd "C-<tab>") 'hippie-expand)
 
 (use-package helm
   :diminish helm-mode
