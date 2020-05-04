@@ -21,11 +21,19 @@ usage() {
     echo "      ... - remaining args are paths under LayoutTests. My default is http/tests/media fast/media fast/mediastream media imported/w3c/web-platform-tests/media imported/web-platform-tests/encrypted-media imported/w3c/web-platform-tests/media-source webaudio"
     echo "      --eme    - run a set of tests for EME"
     echo "      --logging - run tests with logging output, not this may break the tests with meaningless text diffs (logging to stderr)"
+    echo "      --find-files test-name - finds all outputs in both the results directory and LayoutTests directory"
+    echo "                  e.g $0 --find-files clearkey-check-status-for-hdcp"
     echo
 }
 
 while test -n "$1"; do
     case "$1" in
+        --find-files)
+            name=$2
+            find ~/webkit-test/ $src_dir/LayoutTests/ -name "*$name*"
+            exit 0
+            shift
+            ;;
         --logging)
             logging=1
             ;;
