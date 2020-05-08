@@ -39,6 +39,8 @@ There are two things you can do about this warning:
 (global-set-key (kbd "C-;") 'completion-at-point)
 (global-auto-revert-mode t)
 
+(setq exec-path (cons (expand-file-name "~/bin") exec-path))
+
 (setq-default backup-directory-alist `(("." . "~/.emacs.d/saves"))
       backup-by-copying t
       delete-old-versions t
@@ -156,12 +158,15 @@ use v5.28;\n\n"
 (use-package lsp-ui :commands lsp-ui-mode)
 (use-package company-lsp :commands company-lsp)
 ;; I work on projects with too many files.
+
 (setq lsp-enable-file-watchers nil)
+;; disable client-side cache and sorting:
+(setq company-transformers nil company-lsp-async t company-lsp-cache-candidates nil)
 
 (use-package ccls
   :hook ((c-mode c++-mode objc-mode cuda-mode) .
          (lambda () (require 'ccls) (lsp))))
-(setq ccls-executable "~/src/ccls/Release/ccls")
+(setq ccls-executable "ccls")
 
 (global-flycheck-mode 1)
 (with-eval-after-load 'flycheck

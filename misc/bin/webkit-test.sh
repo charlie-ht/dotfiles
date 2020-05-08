@@ -31,6 +31,7 @@ while test -n "$1"; do
         --find-files)
             name=$2
             find ~/webkit-test/ $src_dir/LayoutTests/ -name "*$name*"
+            rg -g TestExpectations ".*$name.*" $src_dir/LayoutTests/
             exit 0
             shift
             ;;

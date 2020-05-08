@@ -6,3 +6,5 @@ source $D/common.sh
 source $D/webkit-common.sh
 
 # TODO: unify
+
+# webkit --branch=master --run rr record
