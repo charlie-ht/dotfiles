@@ -145,6 +145,14 @@ use v5.28;\n\n"
 ;;     (local-set-key (kbd "<f11>") 'hs-show-block))
 ;;   (add-hook 'cc-mode-hook 'cht-c-mode-hook)
 
+(defun cht-c-mode-hook ()
+  (hs-minor-mode)
+  (local-set-key (kbd "C-c C-k") 'compile)
+  (local-set-key (kbd "<f10>") 'hs-hide-block)
+  (local-set-key (kbd "<f11>") 'hs-show-block))
+
+(add-hook 'c++-mode-hook 'cht-c-mode-hook)
+
 (defconst my-cc-style
   '("k&r"
     (c-offsets-alist . ((innamespace . [0])))))
@@ -165,8 +173,16 @@ use v5.28;\n\n"
 
 (use-package ccls
   :hook ((c-mode c++-mode objc-mode cuda-mode) .
-         (lambda () (require 'ccls) (lsp))))
-(setq ccls-executable "ccls")
+         (lambda ()
+           ;; FIXME: This is specific to webkit and should be conditioned on that.
+           (setq ccls-initialization-options
+                 ;'(:index (:comments 0 :threads 8 :initalWhitelist [".*/WebCore/.*", ".*/WebKit/.*", ] :initialBlacklist [".*"]) :completion (:detailedLabel t)))
+                 '(:index (:comments 0 :threads 8) :completion (:detailedLabel t)))
+
+           (setq ccls-executable "ccls")
+           (require 'ccls)
+           (lsp))))
+
 
 (global-flycheck-mode 1)
 (with-eval-after-load 'flycheck
@@ -335,6 +351,9 @@ Argument MAP is c-mode-map or c++-mode-map."
              (fzf/grep-cmd "git grep" fzf/git-grep-args)))
 (global-set-key (kbd "<f9>") 'wk-search)
 
+(require 'rg)
+(rg-enable-default-bindings)
+
 (defun wk-find-file ()
   (interactive)
   (require 'fzf)
@@ -415,7 +434,7 @@ function names for a number of frames."
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
+    (rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

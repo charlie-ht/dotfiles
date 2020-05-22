@@ -132,8 +132,12 @@ else
          --config $build_type -- -j$num_cores bin/MiniBrowser
 fi
 
+echo_heading "Clearing caches..."
+
+rm -rf ~/.local/share/rr
+
 echo_heading "Installing built product..."
 
-jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run ninja -C $build_dir
+jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run ninja -C $build_dir install
 
 popd 2>&1>/dev/null

@@ -52,3 +52,5 @@
 	smtpServerPort = 587
 [http]
 	postBuffer = 1048576000
+[color]
+	ui = auto
