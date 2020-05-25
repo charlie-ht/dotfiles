@@ -19,6 +19,20 @@ export ICECC_VERSION=$HOME/devenv/clang-head.tar.gz
 
 while test -n "$1"; do
     case "$1" in
+        --build-app)
+            ## FIXME: The intent is to provide an easy way to build an
+            ## app against the build git product. wkb
+            ## --build-app=webkit-playground.c will build
+            ## webkit-playgroud.c against the dev libraries.
+            ## You must then be careful to run it in a good env, see run
+            shift
+            build_app="$1"
+            ;;
+        --run-app)
+            ## FIXME: Consolidating to the wk master script really needs doing
+            shift
+            run_app="$1"
+            ;;
         --src-dir=*)
             src_dir="${1#--src-dir=}"
             ;;
@@ -82,13 +96,13 @@ fi
 check_branch
 normalize_branch
 
+install_prefix=$HOME/build/webkit/install-$port-$branch-$build_type
+
 echo_heading "Building $port:$branch in configuration $build_type"
 build_dir=$HOME/igalia/webkit-build-$(basename $src_dir)-$port-$branch-$build_type
 if ! test -d "$build_dir"; then
     mkdir $build_dir
 fi
-
-install_prefix=$HOME/build/webkit/install-$port-$branch-$build_type
 
 echo_heading "=== Configuring WebKit"
 pushd $build_dir 2>&1>/dev/null
@@ -104,6 +118,7 @@ if test -n "$force_rebuild"; then
 fi
 
 OUR_JHBUILD_PREFIX=$(jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env | grep JHBUILD_PREFIX= | cut -f2 -d=)
+
 
 if test -z "$incremental_build"; then
     echo_heading "Reconfiguring build-directory"
@@ -141,3 +156,27 @@ echo_heading "Installing built product..."
 jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run ninja -C $build_dir install
 
 popd 2>&1>/dev/null
+
+if test "$build_app"; then
+    echo_heading "Building with $port:$branch in configuration $build_type"
+    libdir=$install_prefix/lib
+    echo "yes webkit-playgroud.c $libdir"
+    test ! -e $libdir && echo "installed product has no libdir" && exit 1
+    test ! -e $libdir/pkgconfig && echo "installed product has no pkgconfig" && exit 1
+    cflags=$(jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env \
+                     PKG_CONFIG_PATH=$libdir/pkgconfig:$PKG_CONFIG_PATH \
+                     pkg-config --cflags gtk+-3.0 webkit2gtk-4.0 gstreamer-1.0)
+    libs=$(jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env \
+                     PKG_CONFIG_PATH=$libdir/pkgconfig:$PKG_CONFIG_PATH \
+                     pkg-config --libs gtk+-3.0 webkit2gtk-4.0 gstreamer-1.0)
+    $CC -g -O0 -fno-omit-frame-pointer $cflags $build_app -o webkit-playground $libs
+fi
+
+if test "$run_app"; then
+    echo_heading "Running with $port:$branch in configuration $build_type"
+    libdir=$install_prefix/lib
+    test ! -e $libdir && echo "installed product has no libdir" && exit 1
+    jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env \
+            LD_LIBRARY_PATH=$libdir:$LD_LIBRARY_PATH \
+            $run_app
+fi
