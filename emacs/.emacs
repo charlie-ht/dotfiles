@@ -424,7 +424,7 @@ function names for a number of frames."
 (defun webkit-track-url-for-src-file ()
   (interactive)
   (let* ((buffer-name (buffer-file-name))
-         (wk-src-path (s-chop-prefix "/home/cht/webkit/WebKit/" buffer-name)))
+         (wk-src-path (s-chop-prefix "/home/cht/igalia/sources/WebKit/" buffer-name)))
     (browse-url (format "%s%s#L%s" *webkit-trac-base-url* wk-src-path (line-number-at-pos)))))
 
 (custom-set-variables
