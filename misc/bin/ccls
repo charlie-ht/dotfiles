@@ -1,3 +1,0 @@
-#!/bin/sh
-
-exec devenv.sh run /home/cht/devenv/sysroot/bin/ccls $@

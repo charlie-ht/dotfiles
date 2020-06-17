@@ -1,4 +1,0 @@
-#!/usr/bin/perl
-
-print("The firmware versions are:\n");
-print(`fwupdmgr update`);
