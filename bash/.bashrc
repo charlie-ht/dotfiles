@@ -115,17 +115,6 @@ if [[ -n $PS1 ]]; then
         fi
     }
 
-    # Rust toolchain
-    path_prepend_if_missing $HOME/.cargo/bin
-    # Go toolchain
-    path_prepend_if_missing $HOME/local/go/bin
-
-    # Programs I have compiled myself.
-    path_prepend_if_missing $HOME/devenv/sysroot/bin
-
-    # FIXME: fzf should not live here lol
-    path_prepend_if_missing $VIMCONFIG/pack/bundle/start/fzf/bin
-
     path_prepend_if_missing $HOME/bin
     path_prepend_if_missing $HOME/.local/bin
 

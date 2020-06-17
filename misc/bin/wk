@@ -96,9 +96,6 @@ build()
     extra_cmake_args=''
     num_cores=$NUM_CORES
     incremental_build=1
-    CC=$HOME/devenv/icecc/clang
-    CXX=$HOME/devenv/icecc/clang++
-    export ICECC_VERSION=$HOME/devenv/clang-head.tar.gz
 
     while test -n "$1"; do
         case "$1" in
@@ -154,7 +151,7 @@ build()
     if test -z "$incremental_build"; then
         echo_heading "Reconfiguring build-directory"
         jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run \
-	        env ICU_ROOT=$HOME/webkit/deps-prefix/root CC=$CC CXX=$CXX cmake $src_dir \
+	        env CC=gcc CXX=g++ ICU_ROOT=$HOME/webkit/deps-prefix/root cmake $src_dir \
 	        -G Ninja \
 	        -DPORT=${port^^} \
 	        -DCMAKE_BUILD_TYPE=$build_type \
