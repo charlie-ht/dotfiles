@@ -10,6 +10,9 @@ WEBKIT_DEBUG='EME,Media,Events'
 
 while test -n "$1"; do
     case "$1" in
+        --rr)
+            rr=1
+            ;;
         --gst-debug=*)
             GST_DEBUG="${1#--gst-debug=}"
             ;;
@@ -74,7 +77,9 @@ if test -n "$run_strace"; then
    cmd_prefix="strace -f -e trace=stat $cmd_prefix"
 fi
 
-#cmd_prefix="rr record jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run"
+if test -n "$rr"; then
+    cmd_prefix="$cmd_prefix rr record"
+fi
 
 >run.log
 echo_heading "MiniBrowser run for $port:$branch in configuration $build_type" >>run.log

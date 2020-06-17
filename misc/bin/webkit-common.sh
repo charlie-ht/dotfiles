@@ -10,7 +10,7 @@ if [ $(hostname) == "cnut" ]; then
 elif [ $(hostname) == "deimos" ]; then
     # FIXME: How do I detect if Icecream is available? Need to tone this down when on the the road.
     #    I'll just assume it's there...
-    NUM_CORES=40
+    NUM_CORES=50
 elif [ $(hostname) == "hp-laptop" ]; then
     NUM_CORES=3
 else

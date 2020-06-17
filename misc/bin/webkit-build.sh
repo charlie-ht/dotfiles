@@ -178,5 +178,5 @@ if test "$run_app"; then
     test ! -e $libdir && echo "installed product has no libdir" && exit 1
     jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env \
             LD_LIBRARY_PATH=$libdir:$LD_LIBRARY_PATH \
-            $run_app
+            $run_app $passthru
 fi

@@ -1,0 +1,393 @@
+#!/bin/bash
+# -*- mode: shell-script -*-
+
+# cturner: what I do is export env vars
+# cturner: WEBKIT_EXEC_PATH pointing to WebKitBuild/Release/bin
+# cturner: LD_LIBRARY_PATH, prepending WebKitBuild/Release/lib
+# cturner: and WEBKIT_INJECTED_BUNDLE_PATH
+# LD_LIBRARY_PATH ensures the uninstalled libs are loaded
+# and WEBKI_EXEC_PATH ensures binaries from the given path are spwaned
+# https://github.com/aperezdc/dotfiles/blob/master/bin/jhenv
+
+# Something like P=$HOME/myprefix ; cmake -DCMAKE_INSTALL_PREFIX=$P -DCMAKE_INSTALL_LIBDIR=$P/lib ... && jhenv $P ninja install && jhenv $P epiphany should do (or similar)
+# you don't need a system-wide installation
+#but you need to install somewhere because the paths to some things like the WebProcess/NetworkProcess binaries re hardcoded into the binaries during compilation 
+
+#I also do custom compilations and installation, and under Debian Buster I can for now do it outside of Jhbuild
+#additionally I can then freely rsync the build over to other devices, e.g. a laptop or some embedded stuff
+#with such a copied-over installation, I can then build cog against that installation on my laptop, and only focus on cog
+
+D=$(dirname $(readlink -f $0))
+
+source $D/common.sh
+# fixme: collapse into this file when ready
+source $D/webkit-common.sh
+
+usage() {
+    echo "wk help subcommand       | get help for subcommand"
+    echo "wk build [build args]... | build the development webkit"
+    echo "wk test [test args]...   | test the development webkit"
+    echo "wk mini ...              | run the bundled minibrowser application"
+    echo "wk env command ...       | run 'command ...' in an environment with a development webkit and relevant depedencies"
+}
+
+build()
+{
+    build_usage() {
+        echo "build usage"
+    }
+
+    extra_cmake_args=''
+    num_cores=$NUM_CORES
+    incremental_build=1
+    CC=$HOME/devenv/icecc/clang
+    CXX=$HOME/devenv/icecc/clang++
+    export ICECC_VERSION=$HOME/devenv/clang-head.tar.gz
+
+    while test -n "$1"; do
+        case "$1" in
+            --help*|-h*)
+                build_usage
+                ;;
+            --rebuild)
+                incremental_build=""
+                ;;
+            --build-deps)
+                build_deps="yes"
+                ;;
+            --num-cores=*)
+                num_cores="${1#--num-cores=}"
+                ;;
+            --release)
+                build_type="RelWithDebInfo"
+                ;;
+            --debug)
+                build_type="Debug"
+                ;;
+            --extra-cmake-args=*)
+                extras="${1#--extra-cmake-args=}"
+                extra_cmake_args="$extra_cmake_args $extras"
+                ;;
+            *)
+                passthru="$passthru $1"
+                ;;
+        esac
+        shift
+    done
+
+    if test -n "$build_deps"; then
+        echo_heading "=== Updating WebKit dependencies"
+        jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES build
+    fi
+
+    echo_heading "=== Configuring WebKit"
+    pushd $build_dir 2>&1>/dev/null
+
+    # FIXME: not used anymore, but confirm logic is handy to keep
+    if test -n "$force_rebuild"; then
+        read -p "Removing everything in $install_prefix and $build_dir; ok?" -n 1 -r
+        echo    # (optional) move to a new line
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+	    rm -rf $install_prefix
+	    rm -rf $build_dir
+        fi
+    fi
+
+    OUR_JHBUILD_PREFIX=$(jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env | grep JHBUILD_PREFIX= | cut -f2 -d=)
+
+    if test -z "$incremental_build"; then
+        echo_heading "Reconfiguring build-directory"
+        jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run \
+	        env ICU_ROOT=$HOME/webkit/deps-prefix/root CC=$CC CXX=$CXX cmake $src_dir \
+	        -G Ninja \
+	        -DPORT=${port^^} \
+	        -DCMAKE_BUILD_TYPE=$build_type \
+	        -DCMAKE_INSTALL_PREFIX="$install_prefix" \
+	        -DENABLE_GTKDOC=OFF \
+	        -DENABLE_EXPERIMENTAL_FEATURES=ON \
+	        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+	        -DDEVELOPER_MODE=ON \
+	        -DENABLE_MINIBROWSER=ON \
+	        -DENABLE_BUBBLEWRAP_SANDBOX=OFF \
+                -DENABLE_MEDIA_SOURCE=ON \
+                -DENABLE_ENCRYPTED_MEDIA=ON \
+	        $extra_cmake_args
+        echo_heading "Running Ninja on $num_cores cores"
+        time jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run ninja -j$num_cores
+    else
+        echo_warning "WARNING!! Incremental rebuild ($build_dir) (ncores $num_cores)"
+
+        time jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run \
+	     cmake --build $build_dir \
+             --config $build_type -- -j$num_cores bin/MiniBrowser
+    fi
+
+    echo_heading "Installing built product"
+
+    jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run ninja -C $build_dir install
+}
+
+wktest() {
+    test_api=
+
+    while test -n "$1"; do
+        case "$1" in
+            --find-files)
+                name=$2
+                find ~/webkit-test/ $src_dir/LayoutTests/ -name "*$name*"
+                rg -g TestExpectations ".*$name.*" $src_dir/LayoutTests/
+                exit 0
+                shift
+                ;;
+            --logging)
+                logging=1
+                ;;
+            --media)
+                tests='http/tests/media fast/media fast/mediastream media imported/w3c/web-platform-tests/media imported/w3c/web-platform-tests/encrypted-media imported/w3c/web-platform-tests/media-source webaudio'
+                ;;
+            --eme)
+                tests='media/encrypted-media imported/w3c/web-platform-tests/encrypted-media/clearkey* http/tests/media/clearkey'
+                ;;
+            --api)
+                test_api="yes"
+
+                shift
+                test_api_runner=$1
+
+                # FIXME: error checking for arguments
+                if test $# -gt 0; then
+                    shift
+                    test_api_test=$1
+                fi
+                ;;
+            --gst-debug=*)
+                gst_debug="${1#--gst-debug=}"
+                ;;
+            --webkit-src-dir=*)
+                src_dir="${1#--webkit-src-dir=}"
+                ;;
+            --debug*)
+                debugging="yes"
+                ;;
+            *)
+                passthru="$passthru $1"
+                ;;
+        esac
+        shift
+    done
+
+
+    echo_heading "Testing $port:$branch in configuration $build_type"
+
+    if ! test -d "$HOME/igalia/sources/webkitgtk-test-fonts"; then
+        echo_heading "Cloning test fonts into $HOME/igalia/sources"
+        git clone "https://github.com/WebKitGTK/webkitgtk-test-fonts.git" "$HOME/igalia/sources/webkitgtk-test-fonts"
+        if test ! $? -eq 0; then
+            echo_error "failed to clone webkitgtk test fonts, aborting"
+            usage
+            exit 1
+        fi
+    fi
+
+    if ! test -d "$build_dir/webkitgtk-test-fonts"; then
+        ln -sv "$HOME/igalia/sources/webkitgtk-test-fonts" "$build_dir/webkitgtk-test-fonts"
+    fi
+
+    echo_heading "Testing product in $build_dir"
+
+    export PYTHONPATH=$PYTHONPATH:$src_dir/Tools/Scripts
+    export WEBKIT_OUTPUTDIR=$build_dir
+
+    if test -n "$debugging"; then
+        echo_heading "In debug mode, attach a debugger! ($debugging)"
+        test_flags="--additional-env-var=WEBKIT2_PAUSE_WEB_PROCESS_ON_LAUNCH=1 --no-timeout"
+    fi
+
+    rm -f ~/cores/*
+
+    if test -n "$test_api" ; then
+        echo_heading "Testing API"
+        # wk test --api  TestWebKitAPI/WebKit2Gtk/TestWebKitWebView  /webkit/WebKitWebView/fullscreen
+        cmd="$build_dir/bin/$test_api_runner"
+
+        if ! test -z "$test_api_test"; then
+            cmd="$cmd -p $test_api_test"
+        fi
+
+        env TEST_WEBKIT_API_WEBKIT2_RESOURCES_PATH=$src_dir/Tools/TestWebKitAPI/Tests/WebKit \
+            TEST_WEBKIT_API_WEBKIT2_INJECTED_BUNDLE_PATH=$build_dir/lib \
+            WEBKIT_EXEC_PATH=$build_dir/bin \
+            $cmd
+
+        if test $? -eq 0 ; then
+            echo_heading "All tests passed"
+        fi          
+
+        exit 0
+    fi
+
+    # These are the debugging output flags
+    # I can't figure out how to conditionally expand them
+    # into the mega-command line below. If you unconditionally
+    # include them, layout tests will fail due to the text output to stderr by these options
+    # --additional-env-var="WEBKIT_DEBUG=Media,EME,Events,ProcessSuspension" \
+        # --additional-env-var="GST_DEBUG=$gst_debug" \
+        # --additional-env-var="GST_DEBUG_NO_COLOR=1" \
+        # --additional-env-var="GST_DEBUG_DUMP_DOT_DIR=$HOME/gstreamer-dumps/" \
+
+
+    time jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run \
+         env WEBKIT_CORE_DUMPS_DIRECTORY=$HOME/cores \
+	 $src_dir/Tools/Scripts/run-webkit-tests \
+         --additional-env-var="GST_PLUGIN_SYSTEM_PATH=$GST_PLUGIN_SYSTEM_PATH" \
+         --additional-env-var="GST_PLUGIN_PATH=$GST_PLUGIN_PATH" \
+         --additional-env-var="GST_REGISTRY=$GST_REGISTRY" \
+         --additional-env-var="GST_PLUGIN_SCANNER=$GST_PLUGIN_SCANNER" \
+         --additional-env-var="GST_PRESET_PATH=$GST_PRESET_PATH" \
+         --additional-env-var="DISABLE_NI_WARNING=1" \
+	 --debug-rwt-logging \
+	 --platform=$port \
+	 --results-directory=$HOME/webkit-test \
+	 --root=$build_dir \
+	 --build-directory=$build_dir \
+	 --no-build \
+	 --order=random \
+	 --child-processes=8 \
+	 --no-show-results \
+	 --no-retry-failures \
+	 $passthru $tests
+
+    exit 0
+}
+
+run_against_built_webkit() {
+    echo_heading "Running with $port:$branch in configuration $build_type"
+    libdir=$install_prefix/lib
+    echo "yes webkit-playgroud.c $libdir"
+    test ! -e $libdir && echo "installed product has no libdir" && exit 1
+    test ! -e $libdir/pkgconfig && echo "installed product has no pkgconfig" && exit 1
+    cflags=$(jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env \
+                     PKG_CONFIG_PATH=$libdir/pkgconfig:$PKG_CONFIG_PATH \
+                     pkg-config --cflags gtk+-3.0 webkit2gtk-4.0 gstreamer-1.0)
+    libs=$(jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env \
+                     PKG_CONFIG_PATH=$libdir/pkgconfig:$PKG_CONFIG_PATH \
+                     pkg-config --libs gtk+-3.0 webkit2gtk-4.0 gstreamer-1.0)
+
+    echo "$cflags"
+    echo "$libs"
+}
+
+while test -n "$1"; do
+    case "$1" in
+        --help*|-h*)
+            usage
+            ;;
+        --port=*)
+            port="${1#--port=}"
+            if ! test "$port" = "gtk" -o "$port" = "wpe"; then
+                echo_error "port should be gtk or wpe"
+                exit 1
+            fi
+            ;;
+        --build-type=*)
+            build_type="${1#--build-type=}"
+            if ! test "$build_type" = "debug" -o "$build_type" = "release"; then
+                echo_error "build type should be debug or release"
+                exit 1
+            fi
+            # map the build type information into CMake-speak
+            case "$build_type" in
+                *release*)
+                    build_type="RelWithDebInfo"
+                    ;;
+                *debug*)
+                    build_type="Debug"
+                    ;;
+            esac
+            ;;
+        --branch=*)
+            branch="${1#--branch=}"
+            ;;
+        build|"test"|run)
+            cmd="$1"
+            break
+            ;;
+        --run*)
+            cmd=$1
+            break
+            ;;
+        *)
+            echo "Error, unexpected argument $1"
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+if test -z "$build_type"; then
+    echo_warning "no build type given, default to debug"
+    build_type="Debug"
+fi
+if test -z "$port"; then
+    echo_warning "no port given, default to gtk"
+    port=gtk
+fi
+
+if test -z "$src_dir"; then
+    echo_error "no source directory given, aborting"
+    usage
+    exit 1
+fi
+
+check_branch
+normalize_branch
+
+install_prefix=$HOME/build/webkit/install-$port-$branch-$build_type
+build_dir=$HOME/igalia/webkit-build-$(basename $src_dir)-$port-$branch-$build_type
+if ! test -d "$build_dir"; then
+    mkdir $build_dir
+fi
+
+case "$cmd" in
+    build)
+        build $@
+        ;;
+    "test")
+        echo "what?"
+        wktest $@
+        ;;
+    --run-in-jhbuild)
+        jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env
+        ;;
+    *)
+        # fixme: maybe lookup in a whitelist before doing this :O
+        eval "$cmd"
+        ;;
+esac
+
+# TODO: unify
+
+# webkit --branch=master --run rr record
+
+# Logging
+
+# All logs for GTK
+# journalctl --all WEBKIT_SUBSYSTEM=WebKitGTK
+
+# Follow logs
+# journalctl --all --follow WEBKIT_SUBSYSTEM=WebKitGTK
+
+# Microsecond accurate timestamps
+# journalctl --output=short-unix --all --follow WEBKIT_SUBSYSTEM=WebKitGTK
+
+# Show available fields in all journals
+#journalctl --fields | rg -i web
+
+# And the available values
+#journalctl --field=WEBKIT_CHANNEL
+
+# Just logs in a time window, very flexible
+#journalctl --since="-30 seconds"
+
+# useful for a dev on debian,
+#for grp in systemd-journal systemd-timesync systemd-network  systemd-resolve systemd-coredump ; do adduser cht $grp ; done

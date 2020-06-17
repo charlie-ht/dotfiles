@@ -148,6 +148,7 @@ use v5.28;\n\n"
 (defun cht-c-mode-hook ()
   (hs-minor-mode)
   (local-set-key (kbd "C-c C-k") 'compile)
+  (local-set-key (kbd "M-/") 'lsp-find-references)
   (local-set-key (kbd "<f10>") 'hs-hide-block)
   (local-set-key (kbd "<f11>") 'hs-show-block))
 
