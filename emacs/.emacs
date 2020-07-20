@@ -36,6 +36,9 @@ There are two things you can do about this warning:
 
 (load-theme 'tsdh-dark t)
 
+(require 'desktop)
+(add-to-list 'desktop-path "~/igalia/graphics")
+
 (global-set-key (kbd "C-;") 'completion-at-point)
 (global-auto-revert-mode t)
 
@@ -167,10 +170,12 @@ use v5.28;\n\n"
 (use-package lsp-ui :commands lsp-ui-mode)
 (use-package company-lsp :commands company-lsp)
 ;; I work on projects with too many files.
-
 (setq lsp-enable-file-watchers nil)
 ;; disable client-side cache and sorting:
 (setq company-transformers nil company-lsp-async t company-lsp-cache-candidates nil)
+;; https://github.com/emacs-lsp/lsp-mode/issues/1342
+;; without this, i get some very annoying edits happening automatically
+(setq lsp-enable-on-type-formatting nil)
 
 (use-package ccls
   :hook ((c-mode c++-mode objc-mode cuda-mode) .
@@ -317,7 +322,11 @@ Argument MAP is c-mode-map or c++-mode-map."
   (add-hook 'rust-mode-hook 'my-rust-mode-hook)
   (add-hook 'rust-mode-hook #'racer-mode)
   (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
- (setq rust-format-on-save t)))
+  (setq rust-format-on-save t)))
+
+(use-package rg
+  :commands (rg rg-project rg-dwim))
+(rg-enable-default-bindings)
 
 (defun elisp-insert-evaluation ()
   (interactive)
@@ -352,14 +361,23 @@ Argument MAP is c-mode-map or c++-mode-map."
              (fzf/grep-cmd "git grep" fzf/git-grep-args)))
 (global-set-key (kbd "<f9>") 'wk-search)
 
-(require 'rg)
-(rg-enable-default-bindings)
+(require 'fzf)
+(global-set-key (kbd "<f1>") (lambda () (interactive) (fzf)))
 
-(defun wk-find-file ()
-  (interactive)
-  (require 'fzf)
-  (fzf/start (expand-file-name "~/igalia/sources/WebKit/")))
-(global-set-key (kbd "<f1>") 'wk-find-file)
+(defun cht/org-examplify-region (beg end &optional results-switches inline)
+  "Examplify the region by wrapping it in #+begin_example/#+end_example."
+  (interactive "*r")
+  (let ((size (count-lines beg end)))
+    (save-excursion
+      (cond ((= size 0))	      ; do nothing for an empty result
+	    (t
+	     (goto-char beg)
+	     (insert "#+begin_example\n")
+	     (let ((p (point)))
+	       (if (markerp end) (goto-char end) (forward-char (- end beg)))
+	       (org-escape-code-in-region p (point)))
+	     (insert "#+end_example\n"))))))
+
 
 (defun cht/revert-all-no-confirm ()
   "Revert all file buffers, without confirmation.
@@ -428,6 +446,19 @@ function names for a number of frames."
          (wk-src-path (s-chop-prefix "/home/cht/igalia/sources/WebKit/" buffer-name)))
     (browse-url (format "%s%s#L%s" *webkit-trac-base-url* wk-src-path (line-number-at-pos)))))
 
+(require 'elpy)
+(setq python-shell-interpreter "jupyter"
+      python-shell-interpreter-args "console --simple-prompt"
+      python-shell-prompt-detect-failure-warning nil)
+(add-to-list 'python-shell-completion-native-disabled-interpreters
+             "jupyter")
+
+(use-package elpy
+  :ensure t
+  :init
+  (elpy-enable))
+
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -435,7 +466,7 @@ function names for a number of frames."
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
+    (elpy go-mode docker pyvenv rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

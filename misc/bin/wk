@@ -1,22 +1,6 @@
 #!/bin/bash
 # -*- mode: shell-script -*-
 
-# cturner: what I do is export env vars
-# cturner: WEBKIT_EXEC_PATH pointing to WebKitBuild/Release/bin
-# cturner: LD_LIBRARY_PATH, prepending WebKitBuild/Release/lib
-# cturner: and WEBKIT_INJECTED_BUNDLE_PATH
-# LD_LIBRARY_PATH ensures the uninstalled libs are loaded
-# and WEBKI_EXEC_PATH ensures binaries from the given path are spwaned
-# https://github.com/aperezdc/dotfiles/blob/master/bin/jhenv
-
-# Something like P=$HOME/myprefix ; cmake -DCMAKE_INSTALL_PREFIX=$P -DCMAKE_INSTALL_LIBDIR=$P/lib ... && jhenv $P ninja install && jhenv $P epiphany should do (or similar)
-# you don't need a system-wide installation
-#but you need to install somewhere because the paths to some things like the WebProcess/NetworkProcess binaries re hardcoded into the binaries during compilation 
-
-#I also do custom compilations and installation, and under Debian Buster I can for now do it outside of Jhbuild
-#additionally I can then freely rsync the build over to other devices, e.g. a laptop or some embedded stuff
-#with such a copied-over installation, I can then build cog against that installation on my laptop, and only focus on cog
-
 D=$(dirname $(readlink -f $0))
 
 source $D/common.sh
@@ -24,7 +8,7 @@ source $D/common.sh
 GSTREAMER_ROOT=$HOME/gstreamer/gst-build
 
 if [[ -z $GST_ENV ]]; then
-    echo_warning "Not in a gst-environment, setting that up now"
+    # echo_warning "Not in a gst-environment, setting that up now"
     eval $($GSTREAMER_ROOT/gst-env.py --only-environment)
 fi
 
@@ -37,7 +21,7 @@ elif [ $(hostname) == "deimos" ]; then
 elif [ $(hostname) == "hp-laptop" ]; then
     NUM_CORES=3
 else
-    echo_warning "Unknown host, default to 4 cores"
+    # echo_warning "Unknown host, default to 4 cores"
     NUM_CORES=4
 fi
 
@@ -131,6 +115,7 @@ build()
     if test -n "$build_deps"; then
         echo_heading "=== Updating WebKit dependencies"
         jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES build
+        exit 0
     fi
 
     echo_heading "=== Configuring WebKit"
@@ -313,23 +298,6 @@ wktest() {
     exit 0
 }
 
-run_against_built_webkit() {
-    echo_heading "Running with $port:$branch in configuration $build_type"
-    libdir=$install_prefix/lib
-    echo "yes webkit-playgroud.c $libdir"
-    test ! -e $libdir && echo "installed product has no libdir" && exit 1
-    test ! -e $libdir/pkgconfig && echo "installed product has no pkgconfig" && exit 1
-    cflags=$(jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env \
-                     PKG_CONFIG_PATH=$libdir/pkgconfig:$PKG_CONFIG_PATH \
-                     pkg-config --cflags gtk+-3.0 webkit2gtk-4.0 gstreamer-1.0)
-    libs=$(jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env \
-                     PKG_CONFIG_PATH=$libdir/pkgconfig:$PKG_CONFIG_PATH \
-                     pkg-config --libs gtk+-3.0 webkit2gtk-4.0 gstreamer-1.0)
-
-    echo "$cflags"
-    echo "$libs"
-}
-
 while test -n "$1"; do
     case "$1" in
         --help*|-h*)
@@ -365,10 +333,6 @@ while test -n "$1"; do
             cmd="$1"
             break
             ;;
-        --run*)
-            cmd=$1
-            break
-            ;;
         *)
             echo "Error, unexpected argument $1"
             exit 1
@@ -378,11 +342,11 @@ while test -n "$1"; do
 done
 
 if test -z "$build_type"; then
-    echo_warning "no build type given, default to debug"
+    # echo_warning "no build type given, default to debug"
     build_type="Debug"
 fi
 if test -z "$port"; then
-    echo_warning "no port given, default to gtk"
+    # echo_warning "no port given, default to gtk"
     port=gtk
 fi
 
@@ -406,21 +370,41 @@ case "$cmd" in
         build $@
         ;;
     "test")
-        echo "what?"
         wktest $@
         ;;
-    --run-in-jhbuild)
-        jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env
+    run)
+# cturner: what I do is export env vars
+# cturner: WEBKIT_EXEC_PATH pointing to WebKitBuild/Release/bin
+# cturner: LD_LIBRARY_PATH, prepending WebKitBuild/Release/lib
+# cturner: and WEBKIT_INJECTED_BUNDLE_PATH
+# LD_LIBRARY_PATH ensures the uninstalled libs are loaded
+# and WEBKI_EXEC_PATH ensures binaries from the given path are spwaned
+# https://github.com/aperezdc/dotfiles/blob/master/bin/jhenv
+
+# Something like P=$HOME/myprefix ; cmake -DCMAKE_INSTALL_PREFIX=$P -DCMAKE_INSTALL_LIBDIR=$P/lib ... && jhenv $P ninja install && jhenv $P epiphany should do (or similar)
+# you don't need a system-wide installation
+#but you need to install somewhere because the paths to some things like the WebProcess/NetworkProcess binaries re hardcoded into the binaries during compilation 
+
+#I also do custom compilations and installation, and under Debian Buster I can for now do it outside of Jhbuild
+#additionally I can then freely rsync the build over to other devices, e.g. a laptop or some embedded stuff
+#with such a copied-over installation, I can then build cog against that installation on my laptop, and only focus on cog
+
+        shift
+        ldpath=$(jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env | grep '^LD_LIBRARY_PATH' | cut -f2 -d=)
+        pkgpath=$(jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env | grep '^PKG_CONFIG_PATH' | cut -f2 -d=)
+        jhbuild -f $JHBUILDRC -m $JHBUILD_MODULES run env \
+                WEBKIT_EXEC_PATH=$install_prefix/bin \
+                LD_LIBRARY_PATH="$install_prefix/lib:$ldpath" \
+                PKG_CONFIG_PATH="$install_prefix/lib/pkgconfig:$pkgpath" \
+                $@
+        
+        exit 0
         ;;
     *)
         # fixme: maybe lookup in a whitelist before doing this :O
         eval "$cmd"
         ;;
 esac
-
-# TODO: unify
-
-# webkit --branch=master --run rr record
 
 # Logging
 
