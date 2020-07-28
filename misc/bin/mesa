@@ -1,0 +1,270 @@
+#!/bin/bash
+# -*- mode: shell-script -*-
+
+D=$(dirname $(readlink -f $0))
+
+source $D/common.sh
+
+check_branch() {
+    if test -z "$branch"; then
+        branch=$(git -C $src_dir rev-parse --abbrev-ref HEAD | sed -e 's/[^A-Za-z0-9._-]/_/g')
+    fi
+}
+
+normalize_branch() {
+    branch=$(echo $branch | sed -e 's/[^A-Za-z0-9._-]/_/g')
+}
+
+pathmunge ()
+{
+    if ! echo "$PATH" | /bin/grep -Eq "(^|:)$1($|:)" ; then
+        if [ "$2" = "after" ] ; then
+            PATH="$PATH:$1"
+        else
+            PATH="$1:$PATH"
+        fi
+    fi
+}
+
+path_prepend_if_missing ()
+{
+    local pathname="$1"
+    if [ -d $pathname ]; then
+        pathmunge $pathname
+    fi
+}
+
+usage() {
+    echo "wk help subcommand       | get help for subcommand"
+    echo "wk build [build args]... | build the development webkit"
+    echo "wk test [test args]...   | test the development webkit"
+    echo "wk mini ...              | run the bundled minibrowser application"
+    echo "wk env command ...       | run 'command ...' in an environment with a development webkit and relevant depedencies"
+}
+
+__CONTAINER_BIN="docker"
+__GITLAB_REGISTRY_URL="registry.freedesktop.org"
+# __GITLAB_USER="mesa"
+# __GITLAB_USER="tanty"
+__GITLAB_USER="chturne"
+__HOST_CCACHE="$HOME/.ccache"
+__HOST_TRACES_DB="$HOME/igalia/graphics/traces-db"
+__FDO_X86_BUILD_TAG="2020-07-21-tracie"
+# __FDO_X86_TEST_VK_TAG="2020-06-18-gfxreconstruct-dev"
+# __FDO_X86_TEST_VK_TAG="2020-06-18-vkcts-gfxreconstruct-dev"
+__FDO_X86_TEST_VK_TAG="2020-07-14-gfxreconstruct-dev"
+# __FDO_X86_TEST_VK_TAG="2020-06-18-vkcts"
+__FDO_X86_TEST_VK_TAG="2020-07-22-gfxreconstruct-cturner-perfetto"
+# 2020-07-21-tracie
+__VULKAN_DRIVERS="intel,amd"
+__VK_DRIVER="intel"
+__TRACIE_DEVICE_NAME="vk-intel-kbl"
+__DISPLAY=":0.0"
+
+MESA_DIR=$HOME/igalia/graphics/mesa
+
+container_build()
+{
+    # I use the official builder, but a custom test runner
+    local ref="${__GITLAB_REGISTRY_URL}"/mesa/mesa/debian/x86_build:"${__FDO_X86_BUILD_TAG}"
+    echo_heading "=== (container) Building Mesa from $ref"
+
+    enter $MESA_DIR
+
+    $__CONTAINER_BIN run \
+                     -e CCACHE_COMPILERCHECK="content" \
+                     -e CCACHE_COMPRESS="true" \
+                     -e CCACHE_DIR="/cache/mesa/ccache" \
+                     -e LLVM_VERSION="9" \
+                     -e UNWIND="true" \
+                     -e DRI_DRIVERS="i965" \
+                     -e DRI_LOADERS="-D glx=dri -D gbm=enabled -D egl=enabled -D platforms=x11" \
+                     -e GALLIUM_ST="-D dri3=enabled" \
+                     -e GALLIUM_DRIVERS="swrast,virgl" \
+                     -e VULKAN_DRIVERS="${__VULKAN_DRIVERS}" \
+                     -e BUILDTYPE="debug" \
+                     -e EXTRA_OPTION="-Dwerror=true -Dvulkan-overlay-layer=true" \
+                     -v "${__HOST_CCACHE}":/cache/mesa/ccache \
+                     -v "${PWD}":/builds/"${__GITLAB_USER}"/mesa \
+                     -w /builds/"${__GITLAB_USER}"/mesa \
+                     --rm -t \
+                     $ref \
+                     /bin/bash -c 'export PATH="/usr/lib/ccache:$PATH" && export CCACHE_BASEDIR="$PWD" && ccache --show-stats && .gitlab-ci/meson-build.sh && .gitlab-ci/prepare-artifacts.sh && ccache --show-stats' || exit 125
+
+    leave
+}
+
+container_rebuild_artifacts()
+{
+    # I use the official builder, but a custom test runner
+    local ref="${__GITLAB_REGISTRY_URL}"/mesa/mesa/debian/x86_build:"${__FDO_X86_BUILD_TAG}"
+
+    echo_heading "=== (container) Rebuilding Mesa artifacts $ref"
+
+    $__CONTAINER_BIN run \
+                     -e CCACHE_COMPILERCHECK="content" \
+                     -e CCACHE_COMPRESS="true" \
+                     -e CCACHE_DIR="/cache/mesa/ccache" \
+                     -e LLVM_VERSION="9" \
+                     -e UNWIND="true" \
+                     -e DRI_DRIVERS="i965" \
+                     -e DRI_LOADERS="-D glx=dri -D gbm=enabled -D egl=enabled -D platforms=x11" \
+                     -e GALLIUM_ST="-D dri3=enabled" \
+                     -e GALLIUM_DRIVERS="swrast,virgl" \
+                     -e VULKAN_DRIVERS="${__VULKAN_DRIVERS}" \
+                     -e BUILDTYPE="debug" \
+                     -e EXTRA_OPTION="-Dwerror=true -Dvulkan-overlay-layer=true" \
+                     -v "${__HOST_CCACHE}":/cache/mesa/ccache \
+                     -v "${PWD}":/builds/"${__GITLAB_USER}"/mesa \
+                     -w /builds/"${__GITLAB_USER}"/mesa \
+                     --rm -t \
+                     "${__GITLAB_REGISTRY_URL}"/mesa/mesa/debian/x86_build:"${__FDO_X86_BUILD_TAG}" \
+                     /bin/bash -c 'export PATH="/usr/lib/ccache:$PATH" && .gitlab-ci/prepare-artifacts.sh' || exit 125
+}
+
+container_trace()
+{
+    local ref="${__GITLAB_REGISTRY_URL}"/chturne/mesa/debian/x86_test-vk:"${__FDO_X86_TEST_VK_TAG}"
+    echo_heading "=== (container) Tracing Mesa using $ref"
+
+    enter $MESA_DIR
+    $__CONTAINER_BIN run \
+                     --device="/dev/dri/renderD128" \
+                     -e DISPLAY="${__DISPLAY}" \
+                     -e XDG_RUNTIME_DIR="/tmp" \
+                     -e VK_DRIVER="${__VK_DRIVER}" \
+                     -e DEVICE_NAME="${__TRACIE_DEVICE_NAME}" \
+                     -v /tmp/.X11-unix/X0:/tmp/.X11-unix/X0 \
+                     -v "${__HOST_TRACES_DB}":/builds/"${__GITLAB_USER}"/mesa/traces-db \
+                     -v "${__HOST_CCACHE}":/cache/mesa/ccache \
+                     -v "${PWD}":/builds/"${__GITLAB_USER}"/mesa \
+                     -w /builds/"${__GITLAB_USER}"/mesa \
+                     -v "$HOME/igalia/graphics/gfxreconstruct/dbuild/linux/x64/bin":/gfxreconstruct/build/bin \
+                     --rm -t \
+                     $ref \
+                     /bin/bash -c 'rm -rf install && tar -xf artifacts/install.tar && LD_LIBRARY_PATH=install/lib find install/lib -name "*.so" -print -exec ldd {} \; && cat testing-traces.yml > ./install/traces.yml && ./install/tracie-runner-vk.sh'
+
+    leave
+}
+
+container_interactive()
+{
+    local ref="${__GITLAB_REGISTRY_URL}"/chturne/mesa/debian/x86_test-vk:charlie-testing-image
+    echo_heading "=== (container) Interactive Mesa using $ref"
+
+    enter $MESA_DIR
+    $__CONTAINER_BIN run \
+                     --device="/dev/dri/renderD128" \
+                     -e DISPLAY="${__DISPLAY}" \
+                     -e XDG_RUNTIME_DIR="/tmp" \
+                     -e VK_DRIVER="${__VK_DRIVER}" \
+                     -e DEVICE_NAME="${__TRACIE_DEVICE_NAME}" \
+                     -v /tmp/.X11-unix/X0:/tmp/.X11-unix/X0 \
+                     -v "${__HOST_TRACES_DB}":/builds/"${__GITLAB_USER}"/mesa/traces-db \
+                     -v "${__HOST_CCACHE}":/cache/mesa/ccache \
+                     -v "${PWD}":/builds/"${__GITLAB_USER}"/mesa \
+                     -v "/home/cht/igalia/graphics/SaschaWillemsVulkanDemos/build/bin:/SachaWillems" \
+                     -w /builds/"${__GITLAB_USER}"/mesa \
+                     -v "$HOME/igalia/graphics/gfxreconstruct/dbuild/linux/x64/bin":/gfxreconstruct/build/bin \
+                     --rm -it \
+                     $ref \
+                     /bin/bash
+
+    leave
+}
+
+container()
+{
+    container_usage() {
+        echo "container usage"
+    }
+
+    shift # off the container
+
+    while test -n "$1"; do
+        case "$1" in
+             build)
+                 container_build $@
+                 return
+                 ;;
+             artifacts)
+                 container_rebuild_artifacts $@
+                 return
+                 ;;
+             trace)
+                 container_trace $@
+                 return
+                 ;;
+            enter)
+                container_interactive $@
+                return
+                ;;
+        esac
+        shift
+    done
+
+    echo "WAT"
+    return
+}
+
+
+while test -n "$1"; do
+    case "$1" in
+        --help*|-h*)
+            usage
+            ;;
+        --port=*)
+            port="${1#--port=}"
+            if ! test "$port" = "gtk" -o "$port" = "wpe"; then
+                echo_error "port should be gtk or wpe"
+                exit 1
+            fi
+            ;;
+        --build-type=*)
+            build_type="${1#--build-type=}"
+            if ! test "$build_type" = "debug" -o "$build_type" = "release"; then
+                echo_error "build type should be debug or release"
+                exit 1
+            fi
+            # map the build type information into CMake-speak
+            case "$build_type" in
+                *release*)
+                    build_type="RelWithDebInfo"
+                    ;;
+                *debug*)
+                    build_type="Debug"
+                    ;;
+            esac
+            ;;
+        --branch=*)
+            branch="${1#--branch=}"
+            ;;
+        container)
+            cmd="$1"
+            break
+            ;;
+        *)
+            cmd="$1"
+            break
+            ;;
+
+    esac
+    shift
+done
+
+
+case "$cmd" in
+    container)
+        container $@
+        ;;
+    "test")
+        wktest $@
+        ;;
+    run)
+        exit 0
+        ;;
+    *)
+        # fixme: maybe lookup in a whitelist before doing this :O
+        eval "$cmd"
+        ;;
+esac
