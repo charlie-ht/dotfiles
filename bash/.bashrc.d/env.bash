@@ -10,3 +10,4 @@ export ANDROID_HOME=/home/cht/igalia/graphics/android-home
 
 path_prepend_if_missing $HOME/bin
 path_prepend_if_missing $HOME/.local/bin
+path_prepend_if_missing /usr/sbin
