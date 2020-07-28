@@ -37,13 +37,15 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 # : .rsync-excludes
 
 # Selectively include dotfiles
-+ .Xresources
-+ .Xresources.d
++ .X*
++ .x*
 + .bash_history
 + .bash_logout
 + .bash_profile
 + .bashrc
++ .bashrc.d
 + .config
++ .docker
 + .emacs
 + .getmail
 + .gitconfig
@@ -93,7 +95,8 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 - /igalia/webkit-build-*/
 - /webkit-test/
 - /cores/
-# Recreatable
+- /igalia/graphics/mesa/_build/
+- /igalia/graphics/gfxreconstruct/*build/
 - /devenv/
 - /igalia/jhbuild-deps-prefix/
 - /gstreamer/gst-build/build/
