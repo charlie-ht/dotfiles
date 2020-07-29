@@ -1,9 +1,27 @@
+export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
+PIP=pip3
+
 if [[ -x $(which virtualenvwrapper.sh) ]]; then
-    # FIXME: Grim interpreter selection
-    VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3 source $(which virtualenvwrapper.sh)
+    source $(which virtualenvwrapper.sh)
 else
     echo_warning "Woah, Batman! There is not virtualenvwrapper?"
 fi
+
+python_user_list_packages() {
+    $PIP list --user
+}
+
+python_user_install_package() {
+    $PIP install $1
+}
+
+python_user_remove_package() {
+    $PIP uninstall $1
+}
+
+python_user_upgrade_packages() {
+    $PIP list --user
+}
 
 python_new_project() {
     local name=$1
@@ -12,13 +30,22 @@ python_new_project() {
         return 1
     fi
 
-    VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3 mkvirtualenv -p python3.7 $name
+    base_requirements=$(mktemp /tmp/virtual-env-requirements_XXX.txt)
+    cat <<EOF > $tmpfile
+mypy
+flake8
+pylint
+jedi
+jupyter
+numpy
+EOF
+    mkvirtualenv -p python3.7 -r $base_requirements $name
 }
 
 python_list_projects() {
-    VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3 lsvirtualenv
+    lsvirtualenv
 }
 
 python_remove_project() {
-    VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3 rmvirtualenv $1
+    rmvirtualenv $1
 }
