@@ -38,7 +38,6 @@ C=~/.bashrc.d
 
 . $C/debian.bash
 . $C/email.bash
-. $C/ssh.bash
 . $C/git.bash
 
 . $C/python.bash
