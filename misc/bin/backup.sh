@@ -38,7 +38,6 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 
 # Selectively include dotfiles
 + .X*
-+ .x*
 + .bash_history
 + .bash_logout
 + .bash_profile
@@ -69,38 +68,42 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 + .vim
 + .viminfo
 + .vimrc
++ .virtualenvs/
 + .wget-hsts
++ .x*
 + .xchm
-- .local/share/
+
 - .config/google-chrome/
+- .local/share/
+
 # Make sure this stays as the last thing after the explicit includes.
 - /.*
 
 # Selectively exclude files
-- /Downloads
-- /scratch
-- .ccls-cache/
-- *.pyc
-- *~
-- *.swp
 - *#*
-- Qt/
-- /webkit/build*/
-- /webkit/deps*/
-- /igalia/metrological/yocto/**/*build*/cache
-- /igalia/metrological/yocto/**/*build*/tmp-glibc
-- /igalia/metrological/yocto/**/*build*/sstate*
+- *.pyc
+- *.swp
+- *~
+- .ccls-cache/
 - /**/buildroot*/dl/
 - /**/buildroot*/output/
-- /igalia/webkit-build-*/
-- /webkit-test/
-- /cores/
-- /igalia/graphics/mesa/_build/
-- /igalia/graphics/gfxreconstruct/*build/
-- /devenv/
-- /igalia/jhbuild-deps-prefix/
-- /gstreamer/gst-build/build/
+- /Downloads
 - /arm-buildroot-linux-gnueabihf_sdk-buildroot/
+- /cores/
+- /devenv/
+- /gstreamer/gst-build/build/
+- /igalia/graphics/gfxreconstruct/*build/
+- /igalia/graphics/mesa/_build/
+- /igalia/jhbuild-deps-prefix/
+- /igalia/metrological/yocto/**/*build*/cache
+- /igalia/metrological/yocto/**/*build*/sstate*
+- /igalia/metrological/yocto/**/*build*/tmp-glibc
+- /igalia/webkit-build-*/
 - /local
+- /scratch
+- /webkit-test/
+- /webkit/build*/
+- /webkit/deps*/
+- Qt/
 
 EOF
