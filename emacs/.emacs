@@ -34,7 +34,7 @@ There are two things you can do about this warning:
 (menu-bar-mode -1)
 (show-paren-mode 1)
 
-(load-theme 'tsdh-dark t)
+(load-theme 'brutalist t)
 
 (require 'desktop)
 (add-to-list 'desktop-path "~/igalia/graphics")
@@ -464,21 +464,27 @@ function names for a number of frames."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   (quote
+    ("de1f10725856538a8c373b3a314d41b450b8eba21d653c4a4498d52bb801ecd2" default)))
+ '(global-font-lock-mode t)
  '(package-selected-packages
    (quote
-    (elpy go-mode docker pyvenv rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
+    (brutalist-theme elpy go-mode docker pyvenv rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(rainbow-delimiters-base-error-face ((t (:inherit rainbow-delimiters-base-face :foreground "firebrick1"))))
- '(rainbow-delimiters-depth-1-face ((t (:inherit rainbow-delimiters-base-face :foreground "pale green"))))
- '(rainbow-delimiters-depth-2-face ((t (:inherit rainbow-delimiters-base-face :foreground "sandy brown"))))
- '(rainbow-delimiters-depth-3-face ((t (:inherit rainbow-delimiters-base-face :foreground "PaleGreen2"))))
- '(rainbow-delimiters-depth-4-face ((t (:inherit rainbow-delimiters-base-face :foreground "thistle1"))))
- '(rainbow-delimiters-depth-5-face ((t (:inherit rainbow-delimiters-base-face :foreground "papaya whip"))))
+ '(rainbow-delimiters-depth-1-face ((t (:inherit rainbow-delimiters-base-face :foreground "dark gray"))))
+ '(rainbow-delimiters-depth-2-face ((t (:inherit rainbow-delimiters-base-face :foreground "dark orange"))))
+ '(rainbow-delimiters-depth-3-face ((t (:inherit rainbow-delimiters-base-face :foreground "dark green"))))
+ '(rainbow-delimiters-depth-4-face ((t (:inherit rainbow-delimiters-base-face :foreground "dark magenta"))))
+ '(rainbow-delimiters-depth-5-face ((t (:inherit rainbow-delimiters-base-face :foreground "gold"))))
  '(rainbow-delimiters-depth-6-face ((t (:inherit rainbow-delimiters-base-face :foreground "green1"))))
- '(rainbow-delimiters-depth-7-face ((t (:inherit rainbow-delimiters-base-face :foreground "white"))))
+ '(rainbow-delimiters-depth-7-face ((t (:inherit rainbow-delimiters-base-face :foreground "orange red"))))
  '(rainbow-delimiters-depth-8-face ((t (:inherit rainbow-delimiters-base-face :foreground "coral1"))))
- '(rainbow-delimiters-depth-9-face ((t (:inherit rainbow-delimiters-base-face :foreground "HotPink1")))))
+ '(rainbow-delimiters-depth-9-face ((t (:inherit rainbow-delimiters-base-face :foreground "HotPink1"))))
+ '(rainbow-delimiters-mismatched-face ((t (:background "#FFDCDC" :underline (:color "red" :style wave)))))
+ '(rainbow-delimiters-unmatched-face ((t (:background "#FFDCDC" :underline (:color "red" :style wave))))))
