@@ -49,13 +49,10 @@ __GITLAB_REGISTRY_URL="registry.freedesktop.org"
 __GITLAB_USER="chturne"
 __HOST_CCACHE="$HOME/.ccache"
 __HOST_TRACES_DB="$HOME/igalia/graphics/traces-db"
-__FDO_X86_BUILD_TAG="2020-07-21-tracie"
-# __FDO_X86_TEST_VK_TAG="2020-06-18-gfxreconstruct-dev"
-# __FDO_X86_TEST_VK_TAG="2020-06-18-vkcts-gfxreconstruct-dev"
+__FDO_X86_BUILD_TAG="2020-07-28-x86-2"
 __FDO_X86_TEST_VK_TAG="2020-07-14-gfxreconstruct-dev"
 # __FDO_X86_TEST_VK_TAG="2020-06-18-vkcts"
-__FDO_X86_TEST_VK_TAG="2020-07-22-gfxreconstruct-cturner-perfetto"
-# 2020-07-21-tracie
+__FDO_X86_TEST_VK_TAG="2020-08-03-gfxreconstruct-dev"
 __VULKAN_DRIVERS="intel,amd"
 __VK_DRIVER="intel"
 __TRACIE_DEVICE_NAME="vk-intel-kbl"
@@ -139,7 +136,6 @@ container_trace()
                      -v "${__HOST_CCACHE}":/cache/mesa/ccache \
                      -v "${PWD}":/builds/"${__GITLAB_USER}"/mesa \
                      -w /builds/"${__GITLAB_USER}"/mesa \
-                     -v "$HOME/igalia/graphics/gfxreconstruct/dbuild/linux/x64/bin":/gfxreconstruct/build/bin \
                      --rm -t \
                      $ref \
                      /bin/bash -c 'rm -rf install && tar -xf artifacts/install.tar && LD_LIBRARY_PATH=install/lib find install/lib -name "*.so" -print -exec ldd {} \; && cat testing-traces.yml > ./install/traces.yml && ./install/tracie-runner-vk.sh'

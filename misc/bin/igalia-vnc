@@ -1,0 +1,12 @@
+#!/bin/bash
+
+#
+# Assumes you are connected to the VPN
+#
+
+if ! dpkg -l | grep xtightvncviewer 2>&1>/dev/null; then
+   echo "No VNC viewer, apt-get install xtightvncviewer"
+   exit 1
+fi
+
+vncviewer -viewonly -truecolor -compresslevel 9 assembly-station.local.igalia.com

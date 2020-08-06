@@ -25,16 +25,17 @@ There are two things you can do about this warning:
 (eval-when-compile
   (require 'use-package))
 
+(setq inhibit-startup-message t)
 (server-start)
 (add-to-list 'default-frame-alist '(width  . 136))
 (add-to-list 'default-frame-alist '(height . 44))
-(add-to-list 'default-frame-alist '(font . "Input Mono-12"))
+; (add-to-list 'default-frame-alist '(font . "Input Mono-12"))
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 (show-paren-mode 1)
 
-(load-theme 'brutalist t)
+(load-theme 'alect-light t)
 
 (require 'desktop)
 (add-to-list 'desktop-path "~/igalia/graphics")
@@ -178,6 +179,7 @@ use v5.28;\n\n"
 (setq lsp-enable-on-type-formatting nil)
 
 (use-package ccls
+  :ensure t
   :hook ((c-mode c++-mode objc-mode cuda-mode) .
          (lambda ()
            ;; FIXME: This is specific to webkit and should be conditioned on that.
@@ -190,10 +192,11 @@ use v5.28;\n\n"
            (lsp))))
 
 
-(global-flycheck-mode 1)
-(with-eval-after-load 'flycheck
-  (add-hook 'flycheck-mode-hook #'flycheck-pycheckers-setup)
-  (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc)))
+;; Find it too distracting
+;; (global-flycheck-mode 1)
+;; (with-eval-after-load 'flycheck
+;;   (add-hook 'flycheck-mode-hook #'flycheck-pycheckers-setup)
+;;   (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc)))
 
 ;; FIXME: Add to C mode scope somehow
 (defun my-compile ()
@@ -264,34 +267,35 @@ Argument MAP is c-mode-map or c++-mode-map."
   :defer t)
 (require 's)
 
-(use-package helm
-  :diminish helm-mode
-  :init
-  (progn
-    (require 'helm-config)
-    (setq helm-candidate-number-limit 100)
-    ;; From https://gist.github.com/antifuchs/9238468
-    (setq helm-idle-delay 0.0 ; update fast sources immediately (doesn't).
-          helm-input-idle-delay 0.01  ; this actually updates things
-                                        ; reeeelatively quickly.
-          helm-yas-display-key-on-candidate t
-          helm-quick-update t
-          helm-M-x-requires-pattern nil
-          helm-ff-skip-boring-files t)
-    (helm-mode))
-  :bind (("C-c h" . helm-mini)
-         ("C-h a" . helm-apropos)
-         ("C-x C-b" . helm-buffers-list)
-         ("C-x C-f" . helm-find-files)
-         ("C-x b" . helm-buffers-list)
-         ("M-y" . helm-show-kill-ring)
-         ("M-x" . helm-M-x)
-         ("C-x c o" . helm-occur)
-         ("C-x c s" . helm-swoop)
-         ("C-x c y" . helm-yas-complete)
-         ("C-x c Y" . helm-yas-create-snippet-on-region)
-         ("C-x c b" . my/helm-do-grep-book-notes)
-         ("C-x c SPC" . helm-all-mark-rings)))
+;; also, too much scope, too much confusion
+;; (use-package helm
+;;   :diminish helm-mode
+;;   :init
+;;   (progn
+;;     (require 'helm-config)
+;;     (setq helm-candidate-number-limit 100)
+;;     ;; From https://gist.github.com/antifuchs/9238468
+;;     (setq helm-idle-delay 0.0 ; update fast sources immediately (doesn't).
+;;           helm-input-idle-delay 0.01  ; this actually updates things
+;;                                         ; reeeelatively quickly.
+;;           helm-yas-display-key-on-candidate t
+;;           helm-quick-update t
+;;           helm-M-x-requires-pattern nil
+;;           helm-ff-skip-boring-files t)
+;;     (helm-mode))
+;;   :bind (("C-c h" . helm-mini)
+;;          ("C-h a" . helm-apropos)
+;;          ("C-x C-b" . helm-buffers-list)
+;;          ("C-x C-f" . helm-find-files)
+;;          ("C-x b" . helm-buffers-list)
+;;          ("M-y" . helm-show-kill-ring)
+;;          ("M-x" . helm-M-x)
+;;          ("C-x c o" . helm-occur)
+;;          ("C-x c s" . helm-swoop)
+;;          ("C-x c y" . helm-yas-complete)
+;;          ("C-x c Y" . helm-yas-create-snippet-on-region)
+;;          ("C-x c b" . my/helm-do-grep-book-notes)
+;;          ("C-x c SPC" . helm-all-mark-rings)))
 
 (use-package rust-mode
   :ensure t
@@ -325,6 +329,7 @@ Argument MAP is c-mode-map or c++-mode-map."
   (setq rust-format-on-save t)))
 
 (use-package rg
+  :ensure t
   :commands (rg rg-project rg-dwim))
 (rg-enable-default-bindings)
 
@@ -348,6 +353,10 @@ Argument MAP is c-mode-map or c++-mode-map."
            (if (string-match path-regex current-dir)
                top-level-dir
              (cht-project-find-top-level-dir-for-path current-dir (cdr database)))))))
+
+(use-package fzf
+  :ensure t)
+
 (defun cht-project-search ()
   (interactive)
   (let ((top-level-search-path (cht-project-find-top-level-dir-for-path buffer-file-name cht-paths-to-top-level-search-directories-assoc)))
@@ -356,7 +365,7 @@ Argument MAP is c-mode-map or c++-mode-map."
       (error "No search path matches the cwd"))))
 (defun wk-search ()
   (interactive)
-  (require 'fzf)
+
   (fzf/start (expand-file-name "~/igalia/sources/WebKit/Source")
              (fzf/grep-cmd "git grep" fzf/git-grep-args)))
 (global-set-key (kbd "<f9>") 'wk-search)
@@ -446,17 +455,15 @@ function names for a number of frames."
          (wk-src-path (s-chop-prefix "/home/cht/igalia/sources/WebKit/" buffer-name)))
     (browse-url (format "%s%s#L%s" *webkit-trac-base-url* wk-src-path (line-number-at-pos)))))
 
-(require 'elpy)
-(setq python-shell-interpreter "jupyter"
-      python-shell-interpreter-args "console --simple-prompt"
-      python-shell-prompt-detect-failure-warning nil)
-(add-to-list 'python-shell-completion-native-disabled-interpreters
-             "jupyter")
+; (require 'elpy)
+; (setq python-shell-interpreter "python"
+;      python-shell-prompt-detect-failure-warning nil)
 
-(use-package elpy
-  :ensure t
-  :init
-  (elpy-enable))
+;; this was too distracting for me...
+;; (use-package elpy
+;;   :ensure t
+;;   :init
+;;   (elpy-enable))
 
 
 (custom-set-variables
@@ -466,11 +473,11 @@ function names for a number of frames."
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    (quote
-    ("de1f10725856538a8c373b3a314d41b450b8eba21d653c4a4498d52bb801ecd2" default)))
+    ("a0feb1322de9e26a4d209d1cfa236deaf64662bb604fa513cca6a057ddf0ef64" "7153b82e50b6f7452b4519097f880d968a6eaf6f6ef38cc45a144958e553fbc6" "690ae280f6d805719491ad46976be23a87799f2c7fa569003de463532af95e6c" "5ed25f51c2ed06fc63ada02d3af8ed860d62707e96efc826f4a88fd511f45a1d" "de1f10725856538a8c373b3a314d41b450b8eba21d653c4a4498d52bb801ecd2" default)))
  '(global-font-lock-mode t)
  '(package-selected-packages
    (quote
-    (brutalist-theme elpy go-mode docker pyvenv rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
+    (yaml-mode alect-themes brutal-theme pydoc brutalist-theme elpy go-mode docker pyvenv rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

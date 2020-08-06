@@ -1,0 +1,65 @@
+#!/bin/bash
+# Print out what would happen, without actually doing it.
+dry_run=
+
+# Static files are stored on my WD Passport, restore those first.
+PASSPORT_UUID=c788d9de-d012-45d5-9663-2cfe17de9219
+DOTFILE_REPO='git@github.com:charlie-ht/dotfiles2.git'
+
+MOUNT=$(findmnt -n --raw --evaluate --output=target LABEL=Backup)
+
+usage() {
+    echo This script restores my developer environment.
+    echo After installing Ubuntu, run this script as your first action after login.
+    echo Expects to be run on Ubuntu 20.04.1
+    echo Options:
+    echo --help|-h :: Print out a help message
+    echo --dry-run|-n :: Print out what would happen, without actually doing it.
+    echo Known backup disks
+    echo PASSPORT - $PASSPORT_UUID
+}
+
+while test -n "$1"; do
+    case "$1" in
+        --help*|-h*)
+            usage
+            ;;
+        --dry-run|-n)
+            dry_run=1
+            ;;
+        *)
+            passthru="$passthru $1"
+            ;;
+    esac
+    shift
+done
+
+RSYNC_DRY=
+if [ -n "$dry_run" ]; then
+    RSYNC_DRY='n'
+fi
+
+read -p "Going to read from $MOUNT and nuke your home directory; ok?" -n 1 -r
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "Restoring from $MOUNT"
+
+    if [ ! -d "$MOUNT" ]; then
+	echo "Disk not mounted, refusing to continue"
+	exit 1
+    fi
+
+    rsync -va${RSYNC_DRY} --delete "$MOUNT/rsync/" "$HOME"
+
+    if [ -n "$dry_run" ] ; then
+	echo git clone --bare $DOTFILE_REPO $HOME/src/dotfiles
+
+    fi
+
+else
+    echo rsync -va${RSYNC_DRY} --delete "$MOUNT/rsync/" "$HOME"
+fi
+
+
+
+

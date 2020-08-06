@@ -56,6 +56,7 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 + .password-store
 + .pki
 + .profile
++ .python-gitlab.cfg
 + .reportbugrc
 + .saves
 + .ssh
