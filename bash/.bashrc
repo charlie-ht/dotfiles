@@ -40,7 +40,7 @@ C=~/.bashrc.d
 . $C/email.bash
 . $C/git.bash
 
-. $C/python.bash
+. $C/go.bash
 . $C/web.bash
 
 . $C/gstreamer.bash
