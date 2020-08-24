@@ -49,9 +49,9 @@ __GITLAB_REGISTRY_URL="registry.freedesktop.org"
 __GITLAB_USER="chturne"
 __HOST_CCACHE="$HOME/.ccache"
 __HOST_TRACES_DB="$HOME/igalia/graphics/traces-db"
+# The containers come from my personal Mesa fork
+#   https://gitlab.freedesktop.org/chturne/mesa/container_registry/
 __FDO_X86_BUILD_TAG="2020-07-28-x86-2"
-__FDO_X86_TEST_VK_TAG="2020-07-14-gfxreconstruct-dev"
-# __FDO_X86_TEST_VK_TAG="2020-06-18-vkcts"
 __FDO_X86_TEST_VK_TAG="2020-08-03-gfxreconstruct-dev"
 __VULKAN_DRIVERS="intel,amd"
 __VK_DRIVER="intel"
@@ -91,6 +91,8 @@ container_build()
     leave
 }
 
+# Creates an artifacts/install.tar file at output, this tarball can be
+# used to run the development Mesa, done also by build
 container_rebuild_artifacts()
 {
     # I use the official builder, but a custom test runner
@@ -121,6 +123,8 @@ container_rebuild_artifacts()
 
 container_trace()
 {
+    container_rebuild_artifacts
+
     local ref="${__GITLAB_REGISTRY_URL}"/chturne/mesa/debian/x86_test-vk:"${__FDO_X86_TEST_VK_TAG}"
     echo_heading "=== (container) Tracing Mesa using $ref"
 
@@ -131,6 +135,9 @@ container_trace()
                      -e XDG_RUNTIME_DIR="/tmp" \
                      -e VK_DRIVER="${__VK_DRIVER}" \
                      -e DEVICE_NAME="${__TRACIE_DEVICE_NAME}" \
+		     -e CI_PROJECT_PATH='chturne/mesa' \
+		     -e CI_PIPELINE_ID='1234' \
+		     -e CI_JOB_ID='2323' \
                      -v /tmp/.X11-unix/X0:/tmp/.X11-unix/X0 \
                      -v "${__HOST_TRACES_DB}":/builds/"${__GITLAB_USER}"/mesa/traces-db \
                      -v "${__HOST_CCACHE}":/cache/mesa/ccache \
@@ -145,8 +152,12 @@ container_trace()
 
 container_interactive()
 {
-    local ref="${__GITLAB_REGISTRY_URL}"/chturne/mesa/debian/x86_test-vk:charlie-testing-image
+    local ref="${__GITLAB_REGISTRY_URL}"/chturne/mesa/debian/x86_test-vk:"${__FDO_X86_TEST_VK_TAG}"
     echo_heading "=== (container) Interactive Mesa using $ref"
+
+    # Examples of mounting some host build programs into the interactive container
+    #-v "/home/cht/igalia/graphics/SaschaWillemsVulkanDemos/build/bin:/SachaWillems" \
+    #-v "$HOME/igalia/graphics/gfxreconstruct/dbuild/linux/x64/bin":/gfxreconstruct/build/bin \
 
     enter $MESA_DIR
     $__CONTAINER_BIN run \
@@ -155,13 +166,25 @@ container_interactive()
                      -e XDG_RUNTIME_DIR="/tmp" \
                      -e VK_DRIVER="${__VK_DRIVER}" \
                      -e DEVICE_NAME="${__TRACIE_DEVICE_NAME}" \
+		     -e TRACIE_RUNNER_NO_MEMORY_EMULATION=1 \
+		     -e LD_LIBRARY_PATH=":/VulkanTools/build/lib" \
+		     -e DXVK_LOG_LEVEL="none" \
+		     -e TRACIE_RUNNER_NO_MEMORY_EMULATION="1" \
+		     -e WINEPREFIX="/dxvk-wine64" \
+		     -e WINEESYNC="1" \
+		     -e DXVK_STATE_CACHE="0" \
+		     -e PATH="/gfxreconstruct/build/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+		     -e VK_ICD_FILENAMES="/builds/chturne/mesa/install/share/vulkan/icd.d/${__VK_DRIVER}_icd.x86_64.json" \
+		     -e XDG_RUNTIME_DIR="/tmp" \
+		     -e VK_LAYER_PATH=":/VulkanTools/build/etc/vulkan/explicit_layer.d" \
+		     -e WINEDEBUG="-all" \
+		     -e VK_INSTANCE_LAYERS="VK_LAYER_LUNARG_screenshot" \
+		     -e VK_SCREENSHOT_DIR="traces-db/LunarG-VulkanSamples/test/vk-{__VK_DRIVER}-kbl" \
                      -v /tmp/.X11-unix/X0:/tmp/.X11-unix/X0 \
                      -v "${__HOST_TRACES_DB}":/builds/"${__GITLAB_USER}"/mesa/traces-db \
                      -v "${__HOST_CCACHE}":/cache/mesa/ccache \
                      -v "${PWD}":/builds/"${__GITLAB_USER}"/mesa \
-                     -v "/home/cht/igalia/graphics/SaschaWillemsVulkanDemos/build/bin:/SachaWillems" \
                      -w /builds/"${__GITLAB_USER}"/mesa \
-                     -v "$HOME/igalia/graphics/gfxreconstruct/dbuild/linux/x64/bin":/gfxreconstruct/build/bin \
                      --rm -it \
                      $ref \
                      /bin/bash
