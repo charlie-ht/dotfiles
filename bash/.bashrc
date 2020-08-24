@@ -44,6 +44,7 @@ C=~/.bashrc.d
 . $C/web.bash
 
 . $C/gstreamer.bash
+. $C/graphics.bash
 . $C/buildroot.bash
 . $C/webkit.bash
 
