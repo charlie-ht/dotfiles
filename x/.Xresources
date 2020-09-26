@@ -64,32 +64,31 @@ Xft.hinting:                true
 Xft.hintstyle:              hintslight
 
 ! urxvt
-URxvt*termName: rxvt-unicode-256color
-URxvt*loginShell: true
-URxvt*scrollColor: #777777
-URxvt*scrollstyle: plain
-URxvt*scrollBar: false
-URxvt*scrollBar_right: false
-URxvt*scrollBar_floating: false
-URxvt*urgentOnBell: false
-URxvt*visualBell: false
-URxvt*mouseWheelScrollPage: true 
-URxvt*background: Black
-URxvt*foreground: White
-URxvt*colorUL: yellow
-URxvt*underlineColor: yellow
+URxvt.termName: rxvt-unicode-256color
+URxvt.loginShell: true
+URxvt.scrollColor: #777777
+URxvt.scrollstyle: plain
+URxvt.scrollBar: false
+URxvt.scrollBar_right: false
+URxvt.scrollBar_floating: false
+URxvt.urgentOnBell: false
+URxvt.visualBell: false
+URxvt.mouseWheelScrollPage: true 
+URxvt.background: Black
+URxvt.foreground: White
+URxvt.colorUL: yellow
+URxvt.underlineColor: yellow
 URxvt.font: xft:Liberation Mono:pixelsize=20,style=regular
 URxvt.boldFont: xft:Liberation Mono:pixelsize=20,style=bold
 URxvt.italicFont: xft:Liberation Mono:pixelsize=20,style=italic
 URxvt.boldItalicFont: xft:Liberation Mono:pixelsize=20,style=bold italic
-URxvt*saveLines: 0
-URxvt*buffered: true
-URxvt*hold: false
-URxvt*print-pipe: cat > $HOME/$(echo urxvt.dump.$(date +'%Y%M%d%H%m%S'))
-URxvt*perl-ext-common:
-URxvt*perl-ext:
-URxvt.scrollBar: off
-URxvt*cursorBlink: true
+URxvt.saveLines: 100000
+URxvt.buffered: true
+URxvt.hold: false
+URxvt.print-pipe: cat > $HOME/$(echo urxvt.dump.$(date +'%Y%M%d%H%m%S'))
+URxvt.perl-ext-common:
+URxvt.perl-ext:
+URxvt.cursorBlink: true
 ! Any larger than -1 I dont like
 URxvt*letterSpace: -2
 

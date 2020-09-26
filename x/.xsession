@@ -1,17 +1,18 @@
 export GTK_IM_MODULE=xim
 export LAPTOP_SCREEN=eDP-1
-export DESK_SCREEN_LEFT=DP-1-2
-export DESK_SCREEN_RIGHT=DP-1-3
+export DELL_1=DP-1-3
+export DELL_2=DP-1-2
 
 echo 'chtchtchtcht' >> $HOME/.xsession.log
 
-xsetroot -solid gray
+xsetroot -solid black
 
-setxkbmap -model pc105 -layout gb -option ctrl:swapcaps -option terminate:ctrl_alt_bksp -option compose:ralt
+# I do this in /etc/X11 now with XkbOptions rather than like this
+#setxkbmap -model pc105 -layout gb -option ctrl:swapcaps -option terminate:ctrl_alt_bksp -option compose:ralt
 
-xrandr --output $LAPTOP_SCREEN --primary --auto --below $DESK_SCREEN_LEFT \
-       --output $DESK_SCREEN_LEFT --auto --above $LAPTOP_SCREEN --left-of $DESK_SCREEN_RIGHT \
-       --output $DESK_SCREEN_RIGHT --auto --above $LAPTOP_SCREEN --right-of $DESK_SCREEN_LEFT
+xrandr --output $LAPTOP_SCREEN --auto \
+       --output $DELL_1 --primary --auto --right-of $LAPTOP_SCREEN \
+       --output $DELL_2 --auto --right-of $DELL_1 
 
 xrdb -merge ~/.Xresources
 
