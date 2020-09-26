@@ -1,9 +1,9 @@
+#!/usr/bin/env bash
+
 export GTK_IM_MODULE=xim
 export LAPTOP_SCREEN=eDP-1
 export DELL_1=DP-1-3
 export DELL_2=DP-1-2
-
-echo 'chtchtchtcht' >> $HOME/.xsession.log
 
 xsetroot -solid black
 
@@ -16,7 +16,13 @@ xrandr --output $LAPTOP_SCREEN --auto \
 
 xrdb -merge ~/.Xresources
 
-# https://stackoverflow.com/a/38980986
-export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
+GPG_TTY=$(tty)
+export GPG_TTY
+
+eval $(ssh-agent -s)
+
+# Seem necessary to avoid a massive hang on GNOME-apps. Not that I use them, I
+# try not to ...
+dbus-update-activation-environment --systemd DBUS_SESSION_BUS_ADDRESS DISPLAY XAUTHORITY
 
 exec i3 --shmlog-size=26214400
