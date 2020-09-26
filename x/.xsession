@@ -1,7 +1,9 @@
 export GTK_IM_MODULE=xim
 export LAPTOP_SCREEN=eDP-1
-export DESK_SCREEN_RIGHT=DP-1-2
-export DESK_SCREEN_LEFT=DP-1-3
+export DESK_SCREEN_LEFT=DP-1-2
+export DESK_SCREEN_RIGHT=DP-1-3
+
+echo 'chtchtchtcht' >> $HOME/.xsession.log
 
 xsetroot -solid gray
 
