@@ -3,7 +3,6 @@
 dry_run=
 
 # Static files are stored on my WD Passport, restore those first.
-PASSPORT_UUID=c788d9de-d012-45d5-9663-2cfe17de9219
 DOTFILE_REPO='git@github.com:charlie-ht/dotfiles2.git'
 
 MOUNT=$(findmnt -n --raw --evaluate --output=target LABEL=Backup)

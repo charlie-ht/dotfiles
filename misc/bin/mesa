@@ -41,7 +41,7 @@ usage() {
     echo "wk mini ...              | run the bundled minibrowser application"
     echo "wk env command ...       | run 'command ...' in an environment with a development webkit and relevant depedencies"
 }
-
+#3aW2NRjAydXHTr3QzTGc 
 __CONTAINER_BIN="docker"
 __GITLAB_REGISTRY_URL="registry.freedesktop.org"
 # __GITLAB_USER="mesa"
@@ -65,7 +65,7 @@ container_build()
     # I use the official builder, but a custom test runner
     local ref="${__GITLAB_REGISTRY_URL}"/mesa/mesa/debian/x86_build:"${__FDO_X86_BUILD_TAG}"
     echo_heading "=== (container) Building Mesa from $ref"
-
+#Vz5xCjoEUayYPqMW32yS
     enter $MESA_DIR
 
     $__CONTAINER_BIN run \
@@ -134,6 +134,7 @@ container_trace()
                      -e DISPLAY="${__DISPLAY}" \
                      -e XDG_RUNTIME_DIR="/tmp" \
                      -e VK_DRIVER="${__VK_DRIVER}" \
+                     -e DRIVER_NAME="${__VK_DRIVER}" \
                      -e DEVICE_NAME="${__TRACIE_DEVICE_NAME}" \
 		     -e CI_PROJECT_PATH='chturne/mesa' \
 		     -e CI_PIPELINE_ID='1234' \
@@ -145,7 +146,7 @@ container_trace()
                      -w /builds/"${__GITLAB_USER}"/mesa \
                      --rm -t \
                      $ref \
-                     /bin/bash -c 'rm -rf install && tar -xf artifacts/install.tar && LD_LIBRARY_PATH=install/lib find install/lib -name "*.so" -print -exec ldd {} \; && cat testing-traces.yml > ./install/traces.yml && ./install/tracie-runner-vk.sh'
+                     /bin/bash -c "rm -rf install && tar -xf artifacts/install.tar && LD_LIBRARY_PATH=install/lib find install/lib -name "*.so" -print -exec ldd {} \; && cat testing-traces.yml > ./install/traces-${__VK_DRIVER}.yml && ./install/tracie-runner-vk.sh"
 
     leave
 }

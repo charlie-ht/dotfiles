@@ -8,6 +8,8 @@ alias e='emacsclient -n'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
+alias mv='mv -i'
+alias cp='cp -i'
 
 alias mkdir='mkdir -pv'
 if [ -x $(which pydf) ]; then

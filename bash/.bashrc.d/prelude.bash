@@ -57,7 +57,7 @@ img_compress ()
     extension="${1##*.}"
     filename="${1%.*}"
     filename_smaller="${filename}_smaller"
-    convert -strip -quality 40 $1 $filename_smaller.$extension
+    convert -strip -quality 1 $1 $filename_smaller.$extension
 }
 
 extract ()

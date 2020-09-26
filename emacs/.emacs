@@ -29,16 +29,23 @@ There are two things you can do about this warning:
 (server-start)
 (add-to-list 'default-frame-alist '(width  . 136))
 (add-to-list 'default-frame-alist '(height . 44))
-; (add-to-list 'default-frame-alist '(font . "Input Mono-12"))
+(add-to-list 'default-frame-alist '(font . "Mono-15"))
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
-(menu-bar-mode -1)
 (show-paren-mode 1)
 
-(load-theme 'alect-light t)
+(load-theme 'alect-black)
 
 (require 'desktop)
 (add-to-list 'desktop-path "~/igalia/graphics")
+
+;; KEYMAP
+;; C-;            completion-at-point 
+;; C-<tab>        hippe-expansion (consulting more source for generating expansions)
+;; <f1>           'compile    generic "compile project"
+;; <f2>           'next-error skips to next error from last compile
+;; <f3>           'recompile  
+;; <f4>           'cht/search   lookup whatever is under point inteligently
 
 (global-set-key (kbd "C-;") 'completion-at-point)
 (global-auto-revert-mode t)
@@ -62,6 +69,9 @@ There are two things you can do about this warning:
 	try-complete-lisp-symbol-partially try-complete-lisp-symbol))
 (define-key minibuffer-local-map (kbd "C-<tab>") 'hippie-expand)
 
+
+(setq-default grep-save-buffers nil)
+(setq-default compilation-scroll-output 'first-error)
 (defun insert-date ()
   (interactive)
   (insert (shell-command-to-string "echo -n $(date +'%a %d/%m/%Y')")))
@@ -149,6 +159,11 @@ use v5.28;\n\n"
 ;;     (local-set-key (kbd "<f11>") 'hs-show-block))
 ;;   (add-hook 'cc-mode-hook 'cht-c-mode-hook)
 
+(global-set-key (kbd "<f1>") 'compile)
+(global-set-key (kbd "<f2>") 'next-error)
+(global-set-key (kbd "<f3>") 'recompile)
+(setq-default compilation-ask-about-save nil)
+
 (defun cht-c-mode-hook ()
   (hs-minor-mode)
   (local-set-key (kbd "C-c C-k") 'compile)
@@ -156,7 +171,7 @@ use v5.28;\n\n"
   (local-set-key (kbd "<f10>") 'hs-hide-block)
   (local-set-key (kbd "<f11>") 'hs-show-block))
 
-(add-hook 'c++-mode-hook 'cht-c-mode-hook)
+(add-hook 'c-mode-common-hook 'cht-c-mode-hook)
 
 (defconst my-cc-style
   '("k&r"
@@ -371,7 +386,7 @@ Argument MAP is c-mode-map or c++-mode-map."
 (global-set-key (kbd "<f9>") 'wk-search)
 
 (require 'fzf)
-(global-set-key (kbd "<f1>") (lambda () (interactive) (fzf)))
+;(global-set-key (kbd "<f1>") (lambda () (interactive) (fzf)))
 
 (defun cht/org-examplify-region (beg end &optional results-switches inline)
   "Examplify the region by wrapping it in #+begin_example/#+end_example."
@@ -473,16 +488,35 @@ function names for a number of frames."
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    (quote
-    ("a0feb1322de9e26a4d209d1cfa236deaf64662bb604fa513cca6a057ddf0ef64" "7153b82e50b6f7452b4519097f880d968a6eaf6f6ef38cc45a144958e553fbc6" "690ae280f6d805719491ad46976be23a87799f2c7fa569003de463532af95e6c" "5ed25f51c2ed06fc63ada02d3af8ed860d62707e96efc826f4a88fd511f45a1d" "de1f10725856538a8c373b3a314d41b450b8eba21d653c4a4498d52bb801ecd2" default)))
+    ("04dd0236a367865e591927a3810f178e8d33c372ad5bfef48b5ce90d4b476481" "a0feb1322de9e26a4d209d1cfa236deaf64662bb604fa513cca6a057ddf0ef64" "7153b82e50b6f7452b4519097f880d968a6eaf6f6ef38cc45a144958e553fbc6" "690ae280f6d805719491ad46976be23a87799f2c7fa569003de463532af95e6c" "5ed25f51c2ed06fc63ada02d3af8ed860d62707e96efc826f4a88fd511f45a1d" "de1f10725856538a8c373b3a314d41b450b8eba21d653c4a4498d52bb801ecd2" default)))
  '(global-font-lock-mode t)
  '(package-selected-packages
    (quote
-    (yaml-mode alect-themes brutal-theme pydoc brutalist-theme elpy go-mode docker pyvenv rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer))))
+    (yaml-mode alect-themes brutal-theme pydoc brutalist-theme elpy go-mode docker pyvenv rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer)))
+ '(safe-local-variable-values
+   (quote
+    ((eval ignore-errors
+           (require
+            (quote whitespace))
+           (whitespace-mode 1))
+     (whitespace-line-column . 79)
+     (whitespace-style face indentation)
+     (eval progn
+           (c-set-offset
+            (quote case-label)
+            (quote 0))
+           (c-set-offset
+            (quote innamespace)
+            (quote 0))
+           (c-set-offset
+            (quote inline-open)
+            (quote 0)))))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(org-level-3 ((t (:inherit blue))))
  '(rainbow-delimiters-base-error-face ((t (:inherit rainbow-delimiters-base-face :foreground "firebrick1"))))
  '(rainbow-delimiters-depth-1-face ((t (:inherit rainbow-delimiters-base-face :foreground "dark gray"))))
  '(rainbow-delimiters-depth-2-face ((t (:inherit rainbow-delimiters-base-face :foreground "dark orange"))))

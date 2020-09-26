@@ -28,6 +28,8 @@ fi
 # do not truncate shell history at all.
 HISTSIZE=-1
 HISTFILESIZE=-1
+PS1='\u@\h [\W] $ '
+
 
 C=~/.bashrc.d
 . $C/bash_options.bash
@@ -47,13 +49,3 @@ C=~/.bashrc.d
 . $C/graphics.bash
 . $C/buildroot.bash
 . $C/webkit.bash
-
-
-## interactive shell configuration
-if [[ -n $PS1 ]]; then
-    echo "Welcome to the Shell!"
-    echo "Shell stats"
-else
-    # non-interactive shell configuration
-    synax=1
-fi

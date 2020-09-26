@@ -3,36 +3,28 @@
 D=$(dirname $(readlink -f $0))
 source $D/common.sh
 
-# These are the steps to mirror the apt status, I don't know a good way of automating this.
-# computer1$ apt-clone clone cnut.clone
-# scp cnut.clone* computer2
-# computer2$ sudo apt-clone restore cnut.clone*
-# And now you should have the same sets of packages.
-
 rsync_dry_run='-n'
+BACKUP_LABEL='Backup'
+MOUNT=/media/$USER/${BACKUP_LABEL}
+LOG_FILE=/tmp/backup-$(date +%Y-%m-%d-%H%M).log
 
-while test -n "$1"; do
-    case "$1" in
-        --write)
-            rsync_dry_run=''
-            ;;
-        *)
-            passthru="$passthru $1"
-            ;;
-    esac
-    shift
-done
+backup()
+{
+    echo_heading "Backing up to mount point $MOUNT." | tee -a $LOG_FILE
+    echo_heading "Logging to $LOG_FILE." | tee -a $LOG_FILE
 
-MOUNT=/media/cht/Backup
+    echo_heading "Backing up system files" | tee -a $LOG_FILE
+    selections=$(dpkg --get-selections | grep -v deinstall)
+    cat <<<$selections | tee -a $LOG_FILE 1>$MOUNT/ubuntu-packages.list
 
-if ! test -d $MOUNT; then
-    echo_error "$MOUNT does not exist"
-    exit 1
-fi
+    echo_heading "Backing up /usr/local" | tee -a $LOG_FILE
+    sudo tar cvf "$MOUNT/usrlocal.tar" /usr/local | tee -a $LOG_FILE
 
-echo_heading "Backing up to mount point $MOUNT"
+    echo_heading "Backing up /etc" | tee -a $LOG_FILE
+    sudo tar cvf "$MOUNT/etc.tar" /etc | tee -a $LOG_FILE
 
-cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human-readable --filter='. -' $HOME/ "$MOUNT/rsync" | tee $HOME/logs/backup-$(date +%Y-%m-%d-%H%M%S).log
+    echo_heading "Backing up $HOME" | tee -a $LOG_FILE
+    cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human-readable --filter='. -' $HOME/ "$MOUNT/rsync" | tee -a $LOG_FILE
 # Per-directory overrides.
 # : .rsync-excludes
 
@@ -108,3 +100,67 @@ cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human
 - Qt/
 
 EOF
+}
+
+restore()
+{
+    exit 1
+}
+
+usage()
+{
+    echo "Provision script"
+    echo "================"
+    echo "Backs up $HOME and system files to a USB drive labelled with a given label (default: Backup)"
+    echo "The idea is that restoring from the result of this script will provision a new developer machine"
+    echo "with all of my hard-won defaults."
+    echo "I use Ubuntu exclusively. This is not because I make any claims about its relative merits, but"
+    echo "rather because consistency is king in development. Differences hurt exponentially in their number."
+    echo "Options====="
+    echo "$0 [GLOBAL_OPTIONS] CMD"
+    echo "GLOBAL_OPTIONS"
+    echo "--label - label of disk drive to open. Default Backup. This is used as /media/$USER/$LABEL"
+    echo "CMD"
+    echo "write - by default, the script will not modify anything. You must explicitly pass this option for"
+    echo "change to take affect. My backup strategy is destructive. Deleted files get deleted forever. There"
+    echo "is no roll-back after backing up."
+    echo "read|restore - restore a new system from the connected drive. This must be run as root"
+}
+
+while test -n "$1"; do
+    case "$1" in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        --label=*)
+            BACKUP_LABEL="${1#--label=}"
+            ;;
+        write|backup)
+            rsync_dry_run=''
+            backup
+            exit 0
+            ;;
+        "read"|restore)
+            restore
+            exit 0
+            ;;
+        *)
+            # Does this dry
+            echo_error "Unknown option $1"
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+
+if ! test -d $MOUNT; then
+    echo_error "$MOUNT does not exist"
+    exit 1
+fi
+
+# default is to backup
+backup
+
+

@@ -18,6 +18,7 @@ Plugin 'tpope/vim-fugitive'
 Plugin 'vim-syntastic/syntastic'
 Plugin 'majutsushi/tagbar'
 Plugin 'Valloric/YouCompleteMe'
+Plugin 'Valloric/ListToggle'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -34,6 +35,9 @@ filetype plugin indent on    " required
 " see :h vundle for more details or wiki for FAQ
 " Put your non-Plugin stuff after this line
 
+let mapleader = ","
+let maplocalleader = "\\"
+
 set statusline+=%#warningmsg#
 set statusline+=%{SyntasticStatuslineFlag()}
 set statusline+=%*
@@ -43,7 +47,10 @@ let g:syntastic_auto_loc_list = 1
 let g:syntastic_check_on_open = 1
 let g:syntastic_check_on_wq = 0
 
-let g:ycm_use_clangd = 0
+" let g:ycm_use_clangd = 0
 let g:ycm_confirm_extra_conf = 0
 
 nmap <F8> :TagbarToggle<CR>
+
+nnoremap <leader>jd :YcmCompleter GoTo<CR>
+nnoremap <leader>jr :YcmCompleter GoToReferences<CR>
