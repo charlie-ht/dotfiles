@@ -41,6 +41,8 @@ usage() {
     echo "wk mini ...              | run the bundled minibrowser application"
     echo "wk env command ...       | run 'command ...' in an environment with a development webkit and relevant depedencies"
 }
+
+#registry.freedesktop.org/tanty/mesa/debian/x86_devel:2020-09-25
 #3aW2NRjAydXHTr3QzTGc 
 __CONTAINER_BIN="docker"
 __GITLAB_REGISTRY_URL="registry.freedesktop.org"
@@ -53,8 +55,10 @@ __HOST_TRACES_DB="$HOME/igalia/graphics/traces-db"
 #   https://gitlab.freedesktop.org/chturne/mesa/container_registry/
 __FDO_X86_BUILD_TAG="2020-07-28-x86-2"
 __FDO_X86_TEST_VK_TAG="2020-08-03-gfxreconstruct-dev"
-__VULKAN_DRIVERS="intel,amd"
-__VK_DRIVER="intel"
+_
+_VULKAN_DRIVERS="intel,amd"
+_
+_VK_DRIVER="intel"
 __TRACIE_DEVICE_NAME="vk-intel-kbl"
 __DISPLAY=":0.0"
 
@@ -155,12 +159,18 @@ container_interactive()
 {
     local ref="${__GITLAB_REGISTRY_URL}"/chturne/mesa/debian/x86_test-vk:"${__FDO_X86_TEST_VK_TAG}"
     echo_heading "=== (container) Interactive Mesa using $ref"
+    
+
 
     # Examples of mounting some host build programs into the interactive container
     #-v "/home/cht/igalia/graphics/SaschaWillemsVulkanDemos/build/bin:/SachaWillems" \
     #-v "$HOME/igalia/graphics/gfxreconstruct/dbuild/linux/x64/bin":/gfxreconstruct/build/bin \
 
     enter $MESA_DIR
+
+    export __GITLAB_USER=tanty
+
+
     $__CONTAINER_BIN run \
                      --device="/dev/dri/renderD128" \
                      -e DISPLAY="${__DISPLAY}" \
@@ -187,7 +197,7 @@ container_interactive()
                      -v "${PWD}":/builds/"${__GITLAB_USER}"/mesa \
                      -w /builds/"${__GITLAB_USER}"/mesa \
                      --rm -it \
-                     $ref \
+                     registry.freedesktop.org/tanty/mesa/debian/x86_devel:2020-09-25
                      /bin/bash
 
     leave

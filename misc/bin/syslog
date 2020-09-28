@@ -1,0 +1,6 @@
+#!/bin/bash
+
+sudo cat \
+     /var/lib/gdm3/.local/share/xorg/Xorg.0.log \
+     /var/log/syslog
+     

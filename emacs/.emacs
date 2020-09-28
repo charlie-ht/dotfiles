@@ -25,20 +25,6 @@ There are two things you can do about this warning:
 (eval-when-compile
   (require 'use-package))
 
-(setq inhibit-startup-message t)
-(server-start)
-(add-to-list 'default-frame-alist '(width  . 136))
-(add-to-list 'default-frame-alist '(height . 44))
-(add-to-list 'default-frame-alist '(font . "Mono-15"))
-(scroll-bar-mode -1)
-(tool-bar-mode -1)
-(show-paren-mode 1)
-
-(load-theme 'alect-black)
-
-(require 'desktop)
-(add-to-list 'desktop-path "~/igalia/graphics")
-
 ;; KEYMAP
 ;; C-;            completion-at-point 
 ;; C-<tab>        hippe-expansion (consulting more source for generating expansions)
@@ -46,11 +32,34 @@ There are two things you can do about this warning:
 ;; <f2>           'next-error skips to next error from last compile
 ;; <f3>           'recompile  
 ;; <f4>           'cht/search   lookup whatever is under point inteligently
+;; <f11>          zoom in out
+
+(setq inhibit-startup-message t)
+(server-start)
+
+(add-to-list 'default-frame-alist '(width  . 136))
+(add-to-list 'default-frame-alist '(height . 44))
+(add-to-list 'default-frame-alist '(font . "Mono-15"))
+
+(scroll-bar-mode -1)
+(tool-bar-mode -1)
+(show-paren-mode 1)
+
+(load-theme 'alect-black t)
 
 (global-set-key (kbd "C-;") 'completion-at-point)
 (global-auto-revert-mode t)
 
 (setq exec-path (cons (expand-file-name "~/bin") exec-path))
+
+(use-package desktop
+  :ensure t
+  :config 
+  (progn
+    (desktop-save-mode 1)
+    (setq-default
+     desktop-load-locked-desktop t
+     desktop-restore-eager 10)))
 
 (setq-default backup-directory-alist `(("." . "~/.emacs.d/saves"))
       backup-by-copying t
@@ -69,60 +78,54 @@ There are two things you can do about this warning:
 	try-complete-lisp-symbol-partially try-complete-lisp-symbol))
 (define-key minibuffer-local-map (kbd "C-<tab>") 'hippie-expand)
 
-
 (setq-default grep-save-buffers nil)
 (setq-default compilation-scroll-output 'first-error)
+
+;;; auto insertions
+;;; for when you open files with well known extensions and want them
+;;; boilerplated automatically.
+(use-package autoinsert
+  :config
+  (progn
+    (auto-insert-mode t)
+    (add-hook 'find-file-hook 'auto-insert)
+    ;; do not ask about auto-insertions, just do them
+    (setq-default auto-insert-query nil)
+    ;; format of auto-insert mini language
+    ;; alist of (matcher skeleton)
+    ;; where matcher is either
+    ;;    mode-name symbol, eg. 'cc-mode
+    ;;    regex matching file name, eg. (rx (seq ".el" eos))
+    ;;    regex with description, g. ((rx (seq ".el" eos)) . "Emacs lisp files")
+    ;; 
+    (add-to-list
+     'auto-insert-alist
+     `((,(rx (seq "."
+                  (or (any "Hh")
+                      "hh" "hpp" "hxx" "h++"))
+             eos) . "C / C++ header")
+       (replace-regexp-in-string
+        "[^A-Z0-9]" "_"
+        (replace-regexp-in-string
+         "\\+" "P"
+         (upcase (file-name-nondirectory buffer-file-name))))
+       "/* " str " */" \n
+       "/* Copyright (C) " (format-time-string "%Y") " Igalia. S.L. All rights reserved. */\n\n"
+       _))))
+
+(use-package color-moccur
+  :ensure t
+  :commands (isearch-moccur isearch-all)
+  :bind (("M-s O" . moccur)
+         :map isearch-mode-map
+         ("M-o" . isearch-moccur)
+         ("M-O" . isearch-moccur-all))
+  :init
+  (setq isearch-lazy-highlight t))
+
 (defun insert-date ()
   (interactive)
   (insert (shell-command-to-string "echo -n $(date +'%a %d/%m/%Y')")))
-
-;; FIXME: The skeleton language and regex literals are too confusing.
-;;        I forget each time I look at this how it worked.
-(setq-default auto-insert-query nil)
-(setq-default auto-insert-alist
-  '((("\\.\\([Hh]\\|hh\\|hpp\\|hxx\\|h\\+\\+\\)\\'" . "C / C++ header")
-     nil
-     comment-start
-     "Copyright (C) " `(format-time-string "%Y") " Igalia. S.L. All rights reserved."
-     comment-end
-     \n "#pragma once"
-     \n \n
-     _ )
-
-    (("\\.\\([Cc]\\|cc\\|cpp\\|cxx\\|c\\+\\+\\)\\'" . "C / C++ program")
-     nil
-     "#include \""
-     (let ((stem (file-name-sans-extension buffer-file-name))
-           ret)
-       (dolist (ext '("H" "h" "hh" "hpp" "hxx" "h++") ret)
-         (when (file-exists-p (concat stem "." ext))
-           (setq ret (file-name-nondirectory (concat stem "." ext))))))
-     & ?\" | -10
-     \n \n
-     "int main()
-{"
-     > _
-     "}")
-
-    (("\\.\\(pl\\|pm\\)\\'" . "Perl program")
-     nil
-     "#!/usr/bin/perl -w"
-     \n comment-start
-     "Copyright (C) " `(format-time-string "%Y") " by Charles Turner. All rights reserved."
-     comment-end \n
-
-  "use strict;
-use warnings;
-use diagnostics;
-use v5.28;\n\n"
-  > _
-  )
-
-    ))
-
-
-;; Mode customization
-(add-hook 'find-file-hook 'auto-insert)
 
 (defun cht-text-mode-hook ()
   (local-set-key (kbd "C-;") 'ispell-complete-word)
@@ -136,11 +139,13 @@ use v5.28;\n\n"
 
 (use-package ansi-color
   :ensure t)
+
 (defun cht:display-ansi-colors ()
   "Convert ANSI terminal codes into colors across the whole buffer."
   (interactive)
   (ansi-color-apply-on-region (point-min) (point-max)))
 
+;;
 (setq org-todo-keywords
       '((sequence "TODO" "DOING" "STALLED" "|" "REVIEW" "DONE")))
 
@@ -281,6 +286,181 @@ Argument MAP is c-mode-map or c++-mode-map."
   :ensure t
   :defer t)
 (require 's)
+
+(use-package hydra
+  :ensure t
+  :defer t
+  :config
+  (defhydra hyrdra-zoom (global-map "<f11>")
+    "zoom"
+    ("+" text-scale-increase "in")
+    ("-" text-scale-decrease "out")))
+
+(use-package ivy
+  :diminish
+  :ensure t
+  :demand t
+
+  :bind (("C-x b" . ivy-switch-buffer)
+         ("C-x B" . ivy-switch-buffer-other-window)
+         ("M-H"   . ivy-resume))
+
+  :bind (:map ivy-minibuffer-map
+              ("<tab>" . ivy-alt-done)
+              ("SPC"   . ivy-alt-done-or-space)
+              ("C-d"   . ivy-done-or-delete-char)
+              ("C-i"   . ivy-partial-or-done)
+              ("C-r"   . ivy-previous-line-or-history)
+              ("M-r"   . ivy-reverse-i-search))
+
+  :bind (:map ivy-switch-buffer-map
+              ("C-k" . ivy-switch-buffer-kill))
+
+  :custom
+  (ivy-dynamic-exhibit-delay-ms 200)
+  (ivy-height 10)
+  (ivy-initial-inputs-alist nil t)
+  (ivy-magic-tilde nil)
+  (ivy-re-builders-alist '((t . ivy--regex-ignore-order)))
+  (ivy-use-virtual-buffers t)
+  (ivy-wrap t)
+
+  :preface
+  (defun ivy-done-or-delete-char ()
+    (interactive)
+    (call-interactively
+     (if (eolp)
+         #'ivy-immediate-done
+       #'ivy-delete-char)))
+
+  (defun ivy-alt-done-or-space ()
+    (interactive)
+    (call-interactively
+     (if (= ivy--length 1)
+         #'ivy-alt-done
+       #'self-insert-command)))
+
+  (defun ivy-switch-buffer-kill ()
+    (interactive)
+    (debug)
+    (let ((bn (ivy-state-current ivy-last)))
+      (when (get-buffer bn)
+        (kill-buffer bn))
+      (unless (buffer-live-p (ivy-state-buffer ivy-last))
+        (setf (ivy-state-buffer ivy-last)
+              (with-ivy-window (current-buffer))))
+      (setq ivy--all-candidates (delete bn ivy--all-candidates))
+      (ivy--exhibit)))
+
+  ;; This is the value of `magit-completing-read-function', so that we see
+  ;; Magit's own sorting choices.
+  (defun my-ivy-completing-read (&rest args)
+    (let ((ivy-sort-functions-alist '((t . nil))))
+      (apply 'ivy-completing-read args)))
+
+  :config
+  (ivy-mode 1)
+  (ivy-set-occur 'ivy-switch-buffer 'ivy-switch-buffer-occur))
+
+(use-package counsel
+  :after ivy
+  :ensure t
+  :demand t
+  :diminish
+  :custom (counsel-find-file-ignore-regexp
+           (concat "\\(\\`\\.[^.]\\|"
+                   (regexp-opt completion-ignored-extensions)
+                   "\\'\\)"))
+  :bind (("C-*"     . counsel-org-agenda-headlines)
+         ("C-x C-f" . counsel-find-file)
+         ("C-c e l" . counsel-find-library)
+         ("C-c e q" . counsel-set-variable)
+         ("C-c c u" . counsel-unicode-char)
+         ("C-c f"   . counsel-describe-function)
+         ("C-x r b" . counsel-bookmark)
+         ("M-x"     . counsel-M-x)
+         ;; ("M-y"     . counsel-yank-pop)
+
+         ("M-s f" . counsel-file-jump)
+         ;; ("M-s g" . counsel-rg)
+         ("M-s j" . counsel-dired-jump))
+  :commands counsel-minibuffer-history
+  :init
+  (bind-key "M-r" #'counsel-minibuffer-history minibuffer-local-map)
+  :config
+  (add-to-list 'ivy-sort-matches-functions-alist
+               '(counsel-find-file . ivy--sort-files-by-date))
+
+  (defun counsel-recoll-function (string)
+    "Run recoll for STRING."
+    (if (< (length string) 3)
+        (counsel-more-chars 3)
+      (counsel--async-command
+       (format "recollq -t -b %s"
+               (shell-quote-argument string)))
+      nil))
+
+  (defun counsel-recoll (&optional initial-input)
+    "Search for a string in the recoll database.
+  You'll be given a list of files that match.
+  Selecting a file will launch `swiper' for that file.
+  INITIAL-INPUT can be given as the initial minibuffer input."
+    (interactive)
+    (counsel-require-program "recollq")
+    (ivy-read "recoll: " 'counsel-recoll-function
+              :initial-input initial-input
+              :dynamic-collection t
+              :history 'counsel-git-grep-history
+              :action (lambda (x)
+                        (when (string-match "file://\\(.*\\)\\'" x)
+                          (let ((file-name (match-string 1 x)))
+                            (find-file file-name)
+                            (unless (string-match "pdf$" x)
+                              (swiper ivy-text)))))
+              :unwind #'counsel-delete-process
+              :caller 'counsel-recoll)))
+
+(use-package swiper
+  :ensure t
+  :after ivy
+  :bind ("C-M-s" . swiper)
+  :bind (:map swiper-map
+              ("M-y" . yank)
+              ("M-%" . swiper-query-replace)
+              ("C-." . swiper-avy)
+              ("M-c" . swiper-mc))
+  :bind (:map isearch-mode-map
+              ("C-o" . swiper-from-isearch)))
+
+
+(use-package projectile
+  :defer 5
+  :ensure t
+  :diminish
+  :bind* (("C-c TAB" . projectile-find-other-file)
+          ("C-c P" . (lambda () (interactive)
+                       (projectile-cleanup-known-projects)
+                       (projectile-discover-projects-in-search-path))))
+  :bind-keymap ("C-c p" . projectile-command-map)
+  :config
+  (projectile-global-mode)
+
+  (defun my-projectile-invalidate-cache (&rest _args)
+    ;; We ignore the args to `magit-checkout'.
+    (projectile-invalidate-cache nil))
+
+  (eval-after-load 'magit-branch
+    '(progn
+       (advice-add 'magit-checkout
+                   :after #'my-projectile-invalidate-cache)
+       (advice-add 'magit-branch-and-checkout
+                   :after #'my-projectile-invalidate-cache))))
+
+(use-package counsel-projectile
+  :after (counsel projectile)
+  :config
+  (counsel-projectile-mode 1))
+
 
 ;; also, too much scope, too much confusion
 ;; (use-package helm
@@ -492,7 +672,7 @@ function names for a number of frames."
  '(global-font-lock-mode t)
  '(package-selected-packages
    (quote
-    (yaml-mode alect-themes brutal-theme pydoc brutalist-theme elpy go-mode docker pyvenv rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer)))
+    (projectile counsel hydra swiper ivy moccur-edit color-moccur color-moccur-edit yaml-mode alect-themes brutal-theme pydoc brutalist-theme elpy go-mode docker pyvenv rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer)))
  '(safe-local-variable-values
    (quote
     ((eval ignore-errors
