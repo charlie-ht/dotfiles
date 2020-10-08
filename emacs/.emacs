@@ -164,6 +164,17 @@ There are two things you can do about this warning:
 ;;     (local-set-key (kbd "<f11>") 'hs-show-block))
 ;;   (add-hook 'cc-mode-hook 'cht-c-mode-hook)
 
+(use-package tramp
+  :defer 5
+  :config
+  ;; jww (2018-02-20): Without this change, tramp ends up sending hundreds of
+  ;; shell commands to the remote side to ask what the temporary directory is.
+  (put 'temporary-file-directory 'standard-value '("/tmp"))
+  (setq tramp-default-method "ssh"  ;; faster than default scp
+        tramp-auto-save-directory "~/.cache/emacs/backups"
+        tramp-persistency-file-name "~/.emacs.d/data/tramp"))
+
+
 (global-set-key (kbd "<f1>") 'compile)
 (global-set-key (kbd "<f2>") 'next-error)
 (global-set-key (kbd "<f3>") 'recompile)
@@ -672,7 +683,7 @@ function names for a number of frames."
  '(global-font-lock-mode t)
  '(package-selected-packages
    (quote
-    (projectile counsel hydra swiper ivy moccur-edit color-moccur color-moccur-edit yaml-mode alect-themes brutal-theme pydoc brutalist-theme elpy go-mode docker pyvenv rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer)))
+    (geiser lsp-haskell projectile counsel hydra swiper ivy moccur-edit color-moccur color-moccur-edit yaml-mode alect-themes brutal-theme pydoc brutalist-theme elpy go-mode docker pyvenv rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer)))
  '(safe-local-variable-values
    (quote
     ((eval ignore-errors
@@ -709,3 +720,8 @@ function names for a number of frames."
  '(rainbow-delimiters-depth-9-face ((t (:inherit rainbow-delimiters-base-face :foreground "HotPink1"))))
  '(rainbow-delimiters-mismatched-face ((t (:background "#FFDCDC" :underline (:color "red" :style wave)))))
  '(rainbow-delimiters-unmatched-face ((t (:background "#FFDCDC" :underline (:color "red" :style wave))))))
+
+(use-package geiser
+  :ensure t
+  :config
+  (setq geiser-active-implementations '(racket)))

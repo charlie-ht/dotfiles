@@ -3,18 +3,18 @@
 D=$(dirname $(readlink -f $0))
 source $D/common.sh
 
-mkdir /tmp/backup-mountpoint
-sudo cryptsetup luksOpen /dev/sda1 cryptbackup || exit 1
-sudo mount /dev/mapper/cryptbackup /tmp/backup-mountpoint || exit 1
-trap cleanup EXIT SIGINT
-cleanup() {
-	sudo umount /tmp/backup-mountpoint
-	sudo cryptsetup close cryptbackup
-	rm -rf /tmp/backup-mountpoint
-}
+# mkdir /tmp/backup-mountpoint
+# sudo cryptsetup luksOpen /dev/sda1 cryptbackup || exit 1
+# sudo mount /dev/mapper/cryptbackup /tmp/backup-mountpoint || exit 1
+# trap cleanup EXIT SIGINT
+# cleanup() {
+# 	sudo umount /tmp/backup-mountpoint
+# 	sudo cryptsetup close cryptbackup
+# 	rm -rf /tmp/backup-mountpoint
+# }
 
 rsync_dry_run='-n'
-MOUNT=/tmp/backup-mountpoint
+MOUNT=/media/cht/Backup
 LOG_FILE=/tmp/backup-$(date +%Y-%m-%d-%H%M).log
 
 backup()
@@ -162,12 +162,6 @@ while test -n "$1"; do
     esac
     shift
 done
-
-
-if ! mount | grep -q cryptbackup; then
-    echo_error "encrypted backup drive not mounted"
-    exit 1
-fi
 
 # default is to backup
 backup

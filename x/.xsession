@@ -7,6 +7,8 @@ export DELL_2=DP-1-2
 
 xsetroot -solid black
 
+echo $(date) >> $HOME/.my-xsession-log
+
 # I do this in /etc/X11 now with XkbOptions rather than like this
 #setxkbmap -model pc105 -layout gb -option ctrl:swapcaps -option terminate:ctrl_alt_bksp -option compose:ralt
 
