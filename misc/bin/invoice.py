@@ -58,7 +58,7 @@ invoice = invoice_template.substitute(
 with open(os.path.join(D, 'invoices.db'), 'w') as f:
     f.write(str(invoice_number))
 
-INVOICE_ROOT='/home/cht/money/invoices/'
+INVOICE_ROOT='/home/cht/Documents/money/invoices/'
 little_month = now.strftime('%b').lower()
 little_year=now.strftime
 invoice_filename = os.path.join(INVOICE_ROOT, now.strftime('%y-%m-%b').lower() + '.txt')
