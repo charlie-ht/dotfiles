@@ -725,3 +725,8 @@ function names for a number of frames."
   :ensure t
   :config
   (setq geiser-active-implementations '(racket)))
+
+(use-package clang-format
+  :ensure t
+  :config
+  (global-set-key [C-M-tab] 'clang-format-region))
