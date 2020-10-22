@@ -102,6 +102,7 @@ backup()
 - /igalia/metrological/yocto/**/*build*/tmp-glibc
 - /igalia/webkit-build-*/
 - /local
+- /remotes
 - /scratch
 - /webkit-test/
 - /webkit/build*/
