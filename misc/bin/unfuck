@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Sometimes your terminal window gets fucked up.
+# This script attempts to correct that.
+
+stty sane
+tput rs1
+reset
