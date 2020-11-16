@@ -46,7 +46,7 @@ There are two things you can do about this warning:
 (show-paren-mode 1)
 
 (load-theme 'alect-black t)
-(global-font-lock-mode -1)
+(global-font-lock-mode 1)
 
 (global-set-key (kbd "C-;") 'completion-at-point)
 (global-auto-revert-mode t)
