@@ -27,10 +27,10 @@ backup()
     cat <<<$selections | tee -a $LOG_FILE 1>$MOUNT/ubuntu-packages.list
 
     echo_heading "Backing up /usr/local" | tee -a $LOG_FILE
-    sudo tar cvf "$MOUNT/usrlocal.tar" /usr/local | tee -a $LOG_FILE
+    sudo tar cf "$MOUNT/usrlocal.tar" /usr/local | tee -a $LOG_FILE
 
     echo_heading "Backing up /etc" | tee -a $LOG_FILE
-    sudo tar cvf "$MOUNT/etc.tar" /etc | tee -a $LOG_FILE
+    sudo tar cf "$MOUNT/etc.tar" /etc | tee -a $LOG_FILE
 
     echo_heading "Backing up $HOME" | tee -a $LOG_FILE
     cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human-readable --filter='. -' $HOME/ "$MOUNT/rsync" | tee -a $LOG_FILE
