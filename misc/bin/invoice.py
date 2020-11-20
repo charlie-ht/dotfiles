@@ -46,7 +46,6 @@ payment = float(payment)
 telework_help = 64
 payment += telework_help
 
-
 invoice = invoice_template.substitute(
     date_of_invoice=now.strftime('%d/%m/%Y'),
     invoice_number=invoice_number,
