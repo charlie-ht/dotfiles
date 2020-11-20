@@ -446,33 +446,33 @@ Argument MAP is c-mode-map or c++-mode-map."
               ("C-o" . swiper-from-isearch)))
 
 
-(use-package projectile
-  :defer 5
-  :ensure t
-  :diminish
-  :bind* (("C-c TAB" . projectile-find-other-file)
-          ("C-c P" . (lambda () (interactive)
-                       (projectile-cleanup-known-projects)
-                       (projectile-discover-projects-in-search-path))))
-  :bind-keymap ("C-c p" . projectile-command-map)
-  :config
-  ;(projectile-global-mode)
+;; (use-package projectile
+;;   :defer 5
+;;   :ensure t
+;;   :diminish
+;;   :bind* (("C-c TAB" . projectile-find-other-file)
+;;           ("C-c P" . (lambda () (interactive)
+;;                        (projectile-cleanup-known-projects)
+;;                        (projectile-discover-projects-in-search-path))))
+;;   :bind-keymap ("C-c p" . projectile-command-map)
+;;   :config
+;;   ;(projectile-global-mode)
 
-  (defun my-projectile-invalidate-cache (&rest _args)
-    ;; We ignore the args to `magit-checkout'.
-    (projectile-invalidate-cache nil))
+;;   (defun my-projectile-invalidate-cache (&rest _args)
+;;     ;; We ignore the args to `magit-checkout'.
+;;     (projectile-invalidate-cache nil))
 
-  (eval-after-load 'magit-branch
-    '(progn
-       (advice-add 'magit-checkout
-                   :after #'my-projectile-invalidate-cache)
-       (advice-add 'magit-branch-and-checkout
-                   :after #'my-projectile-invalidate-cache))))
+;;   (eval-after-load 'magit-branch
+;;     '(progn
+;;        (advice-add 'magit-checkout
+;;                    :after #'my-projectile-invalidate-cache)
+;;        (advice-add 'magit-branch-and-checkout
+;;                    :after #'my-projectile-invalidate-cache))))
 
-(use-package counsel-projectile
-  :after (counsel projectile)
-  :config
-  (counsel-projectile-mode 1))
+;; (use-package counsel-projectile
+;;   :after (counsel projectile)
+;;   :config
+;;   (counsel-projectile-mode 1))
 
 
 ;; also, too much scope, too much confusion
