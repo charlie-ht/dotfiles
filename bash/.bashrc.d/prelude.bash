@@ -96,3 +96,5 @@ extract ()
         done
     fi
 }
+
+alias chowndir='sudo chown -R ${USER}:${USER}'
