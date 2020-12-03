@@ -51,7 +51,9 @@ There are two things you can do about this warning:
 (global-set-key (kbd "C-;") 'completion-at-point)
 (global-auto-revert-mode t)
 
-(setq exec-path (cons (expand-file-name "~/bin") exec-path))
+(setq exec-path (append (list (expand-file-name "~/.local/bin")
+                              (expand-file-name "~/bin"))
+                        exec-path))
 
 (use-package desktop
   :ensure t
@@ -663,15 +665,18 @@ function names for a number of frames."
          (wk-src-path (s-chop-prefix "/home/cht/igalia/sources/WebKit/" buffer-name)))
     (browse-url (format "%s%s#L%s" *webkit-trac-base-url* wk-src-path (line-number-at-pos)))))
 
-; (require 'elpy)
-; (setq python-shell-interpreter "python"
-;      python-shell-prompt-detect-failure-warning nil)
+;(require 'elpy)
+;(setq python-shell-interpreter "python"
+;     python-shell-prompt-detect-failure-warning nil)
 
 ;; this was too distracting for me...
-;; (use-package elpy
-;;   :ensure t
-;;   :init
-;;   (elpy-enable))
+
+ (use-package elpy
+   :ensure t
+   :config
+   (setq elpy-rpc-python-command "python3")
+   :init
+   (elpy-enable))
 
 
 (custom-set-variables
