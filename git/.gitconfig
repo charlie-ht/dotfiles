@@ -54,3 +54,5 @@
 	postBuffer = 1048576000
 [color]
 	ui = auto
+[submodule]
+	recurse = true
