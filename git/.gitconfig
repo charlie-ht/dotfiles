@@ -56,3 +56,5 @@
 	ui = auto
 [submodule]
 	recurse = true
+[push]
+	recurseSubmodules = on-demand
