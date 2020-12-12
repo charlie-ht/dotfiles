@@ -4,13 +4,14 @@
         ri = rebase -i
         rc = rebase --continue
 	brs = branch -r --sort=-committerdate
-	ci = commit
 	ff = pull --ff-only
 	st = status -s
 	di = diff
-	ca = commit -a
+        dic = diff --cached
         ada = add -A
+	ci = commit
         cia = commit --amend
+        cim = commit -a --no-edit -m
         stepback = reset --hard HEAD~1
 	unstage = reset HEAD --
         llog = log --date=local
