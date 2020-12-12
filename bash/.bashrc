@@ -28,7 +28,7 @@ fi
 # do not truncate shell history at all.
 HISTSIZE=-1
 HISTFILESIZE=-1
-PS1='\u@\h [\W] $ '
+PS1='\u@\e[4;32m\h\e[m [\W] ~ '
 
 
 C=~/.bashrc.d
