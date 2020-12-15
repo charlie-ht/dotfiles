@@ -75,9 +75,6 @@ backup()
 + .x*
 + .xchm
 
-- .config/google-chrome/
-- .local/share/
-
 # Make sure this stays as the last thing after the explicit includes.
 - /.*
 
