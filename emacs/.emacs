@@ -48,6 +48,8 @@ There are two things you can do about this warning:
 (load-theme 'alect-black t)
 (global-font-lock-mode 1)
 
+(add-to-list 'load-path "~/elisp/")
+
 (global-set-key (kbd "C-;") 'completion-at-point)
 (global-auto-revert-mode t)
 
@@ -83,6 +85,8 @@ There are two things you can do about this warning:
 
 (setq-default grep-save-buffers nil)
 (setq-default compilation-scroll-output 'first-error)
+
+(require 'ox-twiki)
 
 ;;; auto insertions
 ;;; for when you open files with well known extensions and want them
