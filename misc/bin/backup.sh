@@ -86,24 +86,8 @@ backup()
 - /**/buildroot*/dl/
 - /**/buildroot*/output/
 - /Downloads
-- /arm-buildroot-linux-gnueabihf_sdk-buildroot/
-- /cores/
-- /devenv/
-- /gstreamer/gst-build/build/
-- /igalia/graphics/gfxreconstruct/*build/
-- /igalia/graphics/mesa/_build/
-- /igalia/jhbuild-deps-prefix/
-- /igalia/metrological/yocto/**/*build*/cache
-- /igalia/metrological/yocto/**/*build*/sstate*
-- /igalia/metrological/yocto/**/*build*/tmp-glibc
-- /igalia/webkit-build-*/
-- /local
 - /remotes
 - /scratch
-- /webkit-test/
-- /webkit/build*/
-- /webkit/deps*/
-- Qt/
 
 EOF
 }
