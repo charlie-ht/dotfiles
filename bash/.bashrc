@@ -30,7 +30,6 @@ HISTSIZE=-1
 HISTFILESIZE=-1
 PS1='\h[\W]> '
 
-
 C=~/.bashrc.d
 . $C/bash_options.bash
 
