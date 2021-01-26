@@ -687,12 +687,13 @@ function names for a number of frames."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(column-number-mode t)
  '(custom-safe-themes
    (quote
     ("04dd0236a367865e591927a3810f178e8d33c372ad5bfef48b5ce90d4b476481" "a0feb1322de9e26a4d209d1cfa236deaf64662bb604fa513cca6a057ddf0ef64" "7153b82e50b6f7452b4519097f880d968a6eaf6f6ef38cc45a144958e553fbc6" "690ae280f6d805719491ad46976be23a87799f2c7fa569003de463532af95e6c" "5ed25f51c2ed06fc63ada02d3af8ed860d62707e96efc826f4a88fd511f45a1d" "de1f10725856538a8c373b3a314d41b450b8eba21d653c4a4498d52bb801ecd2" default)))
  '(package-selected-packages
    (quote
-    (slime clang-format dockerfile-mode geiser lsp-haskell projectile counsel hydra swiper ivy moccur-edit color-moccur color-moccur-edit yaml-mode alect-themes brutal-theme pydoc brutalist-theme elpy go-mode docker pyvenv rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer)))
+    (nasm-mode slime clang-format dockerfile-mode geiser lsp-haskell projectile counsel hydra swiper ivy moccur-edit color-moccur color-moccur-edit yaml-mode alect-themes brutal-theme pydoc brutalist-theme elpy go-mode docker pyvenv rg meson-mode flycheck-pycheckers flycheck helm-git helm-git-grep fzf company-lsp lsp-ui ccls eglot-jl eglot xr cargo magit rainbow-delimiters rainbow-mode use-package racer helm-descbinds flycheck-rust company-racer)))
  '(safe-local-variable-values
    (quote
     ((eval ignore-errors
