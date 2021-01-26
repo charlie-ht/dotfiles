@@ -51,7 +51,6 @@ backup()
 + .gitconfig
 + .gnupg
 + .gtk-bookmarks
-+ .local
 + .mozilla
 + .npm
 + .password-store
