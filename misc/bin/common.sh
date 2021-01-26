@@ -13,7 +13,10 @@ function echo_warning() {
     NC='\033[0m' # No Color
     printf "\n${YELLOW}....$1${NC}\n"
 }
-
+die() {
+    echo_error $@
+    exit 1
+}
 enter(){
     pushd $1 2>&1>/dev/null
 }

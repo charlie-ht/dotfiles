@@ -1,8 +1,16 @@
 #!/bin/bash
 
+# Set errexit to force an exit on error conditions, and pipefail to
+# force any failures in a pipeline to create an error condition
+set -o errexit
+set -o pipefail
+#set -o xtrace
+
+
 D=$(dirname $(readlink -f $0))
 source $D/common.sh
 
+# Would be nice to be not reliant on the DE setting up the disk
 # mkdir /tmp/backup-mountpoint
 # sudo cryptsetup luksOpen /dev/sda1 cryptbackup || exit 1
 # sudo mount /dev/mapper/cryptbackup /tmp/backup-mountpoint || exit 1
@@ -13,27 +21,35 @@ source $D/common.sh
 # 	rm -rf /tmp/backup-mountpoint
 # }
 
-rsync_dry_run='-n'
 MOUNT=/media/cht/Backup
 LOG_FILE=/tmp/backup-$(date +%Y-%m-%d-%H%M).log
+DRY_RUN='yes'
+
+log() {
+    echo_heading "$LOG_PREFIX $@" | tee -a $LOG_FILE
+}
 
 backup()
 {
-    echo_heading "Backing up to mount point $MOUNT." | tee -a $LOG_FILE
-    echo_heading "Logging to $LOG_FILE." | tee -a $LOG_FILE
+    set -o nounset
 
-    echo_heading "Backing up system files" | tee -a $LOG_FILE
+    log "Backing up to mount point $MOUNT."
+    log "Logging to $LOG_FILE."
+
+    log "Backing up installed package list..."
     selections=$(dpkg --get-selections | grep -v deinstall)
-    cat <<<$selections | tee -a $LOG_FILE 1>$MOUNT/ubuntu-packages.list
+    num_selections=$(dpkg --get-selections | grep -v deinstall | wc -l)
+    log "There are $num_selections packages."
+    [ "$DRY_RUN" ] || echo $selections > $MOUNT/ubuntu-packages.list
 
-    echo_heading "Backing up /usr/local" | tee -a $LOG_FILE
-    sudo tar cf "$MOUNT/usrlocal.tar" /usr/local | tee -a $LOG_FILE
+    log "Backing up /usr/local"
+    [ "$DRY_RUN" ] || tar cf "$MOUNT/usrlocal.tar" /usr/local
 
-    echo_heading "Backing up /etc" | tee -a $LOG_FILE
-    sudo tar cf "$MOUNT/etc.tar" /etc | tee -a $LOG_FILE
+    log "(!!ROOT REQUIRED!!) Backing up /etc"
+    [ "$DRY_RUN" ] || sudo tar cf "$MOUNT/etc.tar" /etc
 
-    echo_heading "Backing up $HOME" | tee -a $LOG_FILE
-    cat <<EOF | rsync -av $rsync_dry_run --delete --delete-excluded  --stats --human-readable --filter='. -' $HOME/ "$MOUNT/rsync" | tee -a $LOG_FILE
+    log "Backing up $HOME"
+    cat <<EOF | rsync -av $RSYNC_EXTRA --delete --delete-excluded  --stats --human-readable --filter='. -' $HOME/ "$MOUNT/rsync" | tee -a $LOG_FILE
 # Per-directory overrides.
 # : .rsync-excludes
 
@@ -45,6 +61,10 @@ backup()
 + .bashrc
 + .bashrc.d
 + .config
+# This is all saved in the Chrome cloud anyway, and there's a lot of crap
+- .config/google-chrome/
+# Also not interesting configuration
+- .config/discord/
 + .docker
 + .emacs
 + .getmail
@@ -80,6 +100,7 @@ backup()
 # Selectively exclude files
 - *#*
 - *.pyc
+- .tox/
 - *.swp
 - *~
 - .ccls-cache/
@@ -88,8 +109,10 @@ backup()
 - /Downloads
 - /remotes
 - /scratch
-
+- Qt/
+- local/
 EOF
+    set +o nounset
 }
 
 restore()
@@ -99,22 +122,7 @@ restore()
 
 usage()
 {
-    echo "Provision script"
-    echo "================"
-    echo "Backs up $HOME and system files to a USB drive labelled with a given label (default: Backup)"
-    echo "The idea is that restoring from the result of this script will provision a new developer machine"
-    echo "with all of my hard-won defaults."
-    echo "I use Ubuntu exclusively. This is not because I make any claims about its relative merits, but"
-    echo "rather because consistency is king in development. Differences hurt exponentially in their number."
-    echo "Options====="
-    echo "$0 [GLOBAL_OPTIONS] CMD"
-    echo "GLOBAL_OPTIONS"
-    echo "--label - label of disk drive to open. Default Backup. This is used as /media/$USER/$LABEL"
-    echo "CMD"
-    echo "write - by default, the script will not modify anything. You must explicitly pass this option for"
-    echo "change to take affect. My backup strategy is destructive. Deleted files get deleted forever. There"
-    echo "is no roll-back after backing up."
-    echo "read|restore - restore a new system from the connected drive. This must be run as root"
+    echo "$0 -f will perform writes, by default show actions to be taken"
 }
 
 while test -n "$1"; do
@@ -123,20 +131,10 @@ while test -n "$1"; do
             usage
             exit 0
             ;;
-        --label=*)
-            BACKUP_LABEL="${1#--label=}"
-            ;;
-        write|backup)
-            rsync_dry_run=''
-            backup
-            exit 0
-            ;;
-        "read"|restore)
-            restore
-            exit 0
+        -f)
+            DRY_RUN=
             ;;
         *)
-            # Does this dry
             echo_error "Unknown option $1"
             exit 1
             ;;
@@ -144,6 +142,14 @@ while test -n "$1"; do
     shift
 done
 
-# default is to backup
-backup
+[ -G $MOUNT/rsync ] || die "$MOUNT does not exist or is not owned by us"
+if [ "$DRY_RUN" ]; then
+    LOG_PREFIX="(DRY)"
+    RSYNC_EXTRA="-n"
+else
+    LOG_PREFIX="(LIVE)"
+    RSYNC_EXTRA=""
+fi
 
+
+backup
