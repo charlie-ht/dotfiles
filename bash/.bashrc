@@ -37,6 +37,7 @@ C=~/.bashrc.d
 . $C/aliases.bash
 . $C/env.bash
 
+. $C/ssh.bash
 . $C/debian.bash
 . $C/email.bash
 . $C/git.bash
